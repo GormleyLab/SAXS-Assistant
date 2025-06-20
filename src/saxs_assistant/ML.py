@@ -8,6 +8,14 @@ import pandas as pd
 import logging
 from joblib import load
 from scipy.integrate import quad, trapezoid
+from saxs_assistant import models
+from importlib import resources
+
+
+def load_model(filename: str):
+    with resources.path(models, filename) as path:
+        bundle = load(path)
+    return bundle
 
 
 def compute_franke_features(q, I, rg, i0, sample_id, df, j):
@@ -28,15 +36,17 @@ def compute_franke_features(q, I, rg, i0, sample_id, df, j):
 
 
 def predict_dmax_from_features_only(
-    df, j, bundle_path=r"models\dmax_predictor_2bundle_05262025.joblib"
+    df, j, bundle_path="dmax_predictor_2bundle_05262025.joblib"
 ):
+    # bundle_path=r"models\dmax_predictor_2bundle_05262025.joblib" no longer using cause resources
     """
     Loads model bundle and predicts Dmax for row j of df.
     Returns the predicted Dmax and feature values used.
     The name of the model bundle must remain the same for it to work
     """
     try:
-        bundle = load(bundle_path)
+        # bundle = load(bundle_path)
+        bundle = load_model(bundle_path)
         model = bundle["model"]
         scaler = bundle["scaler"]
         feature_names = bundle["features"]
@@ -71,9 +81,8 @@ def predict_dmax_from_features_only(
         return np.nan, {"error": str(e)}
 
 
-def assign_gmm_clusters(
-    df, j, bundle_path=r"models\gmm_cluster_2bundle_05262025.joblib"
-):
+def assign_gmm_clusters(df, j, bundle_path="gmm_cluster_2bundle_05262025.joblib"):
+    # bundle_path=r"models\gmm_cluster_2bundle_05262025.joblib" no longer using cause resources
     """
     Loads model bundle and predicts cluster probabilities using GMM for row j of df.
     Returns the predicted cluster and feature values used.
@@ -81,7 +90,8 @@ def assign_gmm_clusters(
     """
 
     try:
-        bundle = load(bundle_path)
+        # bundle = load(bundle_path)
+        bundle = load_model(bundle_path)
         model = bundle["model"]
         scaler = bundle["scaler"]
         features = bundle["features"]

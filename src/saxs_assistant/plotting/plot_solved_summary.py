@@ -4,8 +4,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import gridspec
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
-from src.features import min_max_function
-from src.rg_tools import get_residuals_guinier_plot
+from ..features import min_max_function
+from ..rg_tools import get_residuals_guinier_plot
 from joblib import load
 
 
@@ -278,7 +278,7 @@ def plot_solved_summary(
                 plot_item["Rg Method 1 Final"]["nmax"][0],
             )
             ax_top = fig.add_subplot(gs3[0, 1])
-            ax_bot = fig.add_subplot(gs3[1, 1])
+            ax_bot = fig.add_subplot(gs3[1, 1], sharex=ax_top)
 
             # ax_top, ax_bot = axes[0, 1], axes[1, 1]
 

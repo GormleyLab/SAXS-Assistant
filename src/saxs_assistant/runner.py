@@ -5,15 +5,16 @@ Extracting various features and generating plots that are stored in a dictionary
 This module is designed to be run as a script, and it will process the SAXS data files specified in the input DataFrame.
 """
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import warnings
 from IPython.display import display, Javascript
 import time
+from pathlib import Path
+import os
 from tqdm import tqdm
 import logging
-from joblib import load
+from joblib import load, dump
 from .rawutils import sasm as SASM
 
 from .rawutils import Profile_Loader
@@ -31,11 +32,7 @@ from .ML import (
     compute_franke_features,
 )
 
-#  import (
-#     compute_franke_features,
-#     predict_dmax_from_features_only,
-#     assign_gmm_clusters,
-# )
+
 from .PDDF_tools import (
     get_all_pr_results,
     unpack_pr_fits_dict,
@@ -50,6 +47,22 @@ logging.basicConfig(level=logging.INFO)
 
 # Helper to store plots
 plot_data = {}
+
+
+def get_unique_output_dir(base_dir="results"):
+    """Create a unique output directory by appending an index if the base directory already exists.
+    Used in the analyze_and_save function to ensure results are saved in a unique directory, for when multiple instances of script are ran simultaneously.
+    This prevents overwriting results from previous runs. Also usful for future steps when updating and combining results.
+    :param base_dir: The base directory name to create.
+    :return: A Path object pointing to the unique directory.
+    """
+    base_path = Path(base_dir)
+    i = 1
+    while base_path.exists():
+        base_path = Path(f"{base_dir}_{i}")
+        i += 1
+    base_path.mkdir(parents=True)
+    return base_path
 
 
 def beep():
@@ -223,6 +236,13 @@ def run_analysis(df_wrong, s0=0):
             logging.warning(f"Failed to load profile for {sample_id}: {e}")
             df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Profile Load"
             plot_data.setdefault(sample_id, {})["Flagged"] = True
+            print(
+                'Did you remember to setup the dataframe with the "path" and "file name" columns?'
+            )
+            print(
+                "If not use the `prepare_dataframe(dataframe_path, data_folder_apth)` function to do so."
+            )
+            print("for more information type prepare_dataframe??")
             continue
 
         # GPA Plot
@@ -677,3 +697,155 @@ def run_analysis(df_wrong, s0=0):
 
     print_end_time(start_time)
     return plot_data, df_wrong
+
+
+def analyze_and_save(df_path, start_index=0, end_index=None, output_dir=None):
+    """
+    Main function to analyze SAXS data from a DataFrame and save results.
+    Same as run_analysis but with input and output handling.
+
+    :param df_path: Path to the input Excel file containing the file names, path and angular units.
+    :param start_index: Index to start analysis from (default is 0). Useful for analyzing large sets in portions
+    :param end_index: If specified, index to stop analysis at (exclusive). Default is None which means all data.
+    :param output_dir: Directory to save results. Optional, if not specified, a 'return' folder will be created next to the input file.
+    :return: Tuple of plot_data dictionary and updated DataFrame with results.
+    """
+
+    def sanitize_path(path_str):
+        return Path(str(path_str).strip().strip('"').strip("'"))
+
+    def clean_dataframe_paths(df, column_name):
+        df[column_name] = df[column_name].apply(
+            lambda x: str(Path(str(x).strip().strip('"').strip("'")))
+        )
+        return df
+
+    # Clean up and parse input path
+    df_path = sanitize_path(df_path)
+
+    # If output_dir is not specified, create a 'return' folder next to the input file
+    if output_dir is None:
+        output_dir = df_path.parent / "return"
+    else:
+        output_dir = sanitize_path(output_dir)
+
+    print(f"Using input file: {df_path}")
+    print(f"Saving results to: {output_dir}")
+
+    # Load and clean dataframe
+    df = pd.read_excel(df_path)
+    df = clean_dataframe_paths(df, "path")
+    df["path"] = df["path"] + "/"
+
+    # Run analysis
+    if end_index is None:
+        plot_data, updated_df = run_analysis(df, start_index)
+    elif int(end_index) > len(df):
+        raise ValueError(
+            f"end_index {end_index} is greater than length of df {len(df)}"
+        )
+    else:
+        plot_data, updated_df = run_analysis(df[: int(end_index)], start_index)
+
+    # Save results
+    # Only apply auto-folder logic if output_dir wasn't specified
+    # This makes sure no overwriting happens if multiple instances of the script are run simultaneously
+    if output_dir == "outputs":
+        output_dir = get_unique_output_dir("results")
+    else:
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+    dump(plot_data, output_dir / "plot_data.joblib")
+    updated_df.to_excel(output_dir / "results.xlsx")
+    beep()  # Notify user that analysis is complete
+    return plot_data, updated_df
+
+
+import pandas as pd
+from pathlib import Path
+from datetime import datetime
+
+
+def prepare_dataframe(dataframe_path=None, folder_path=None, angular_unit=None):
+    """
+    Prepares and saves a dataframe for SAXS analysis with required columns:
+    - 'file name'
+    - 'path'
+    - 'Angular unit'
+
+    Parameters:
+    ----------
+    dataframe_path : str or Path, optional
+        Path to an existing Excel file with 'file name' and 'path' columns.
+    folder_path : str or Path, optional
+        If dataframe_path is not provided, use this to create a new dataframe.
+    angular_unit : str
+        Unit of the angular axis. Can be '1/A', 'A', '1/nm', or 'nm'.
+
+    Returns:
+    -------
+    pd.DataFrame
+        Formatted dataframe ready for analysis.
+    """
+    print("folder_path before parsing:", folder_path)
+
+    if angular_unit is None:
+        raise ValueError(
+            "You must provide the 'angular_unit' argument (e.g., '1/A', 'nm')."
+        )
+
+    # Normalize angular unit
+    angular_unit = angular_unit.strip().lower()
+    if angular_unit in ["a", "1/a"]:
+        angular_unit = "1/A"
+    elif angular_unit in ["nm", "1/nm"]:
+        angular_unit = "1/nm"
+    else:
+        raise ValueError("angular_unit must be '1/A' or '1/nm'")
+
+    save_path = None
+
+    if dataframe_path:
+        dataframe_path = Path(str(dataframe_path).strip().strip('"').strip("'"))
+        df = pd.read_excel(dataframe_path)
+
+        if "path" not in df.columns or "file name" not in df.columns:
+            raise ValueError("Dataframe must contain 'file name' and 'path' columns.")
+
+        # Clean up paths
+        df["path"] = df["path"].apply(
+            lambda x: str(Path(str(x).strip().strip('"').strip("'")))
+        )
+        df["path"] = df["path"].apply(lambda x: x if x.endswith("/") else x + "/")
+
+        save_path = dataframe_path.with_stem(dataframe_path.stem + "_input")
+
+    elif folder_path:
+        folder_path = Path(str(folder_path).strip().strip('"').strip("'"))
+        if not folder_path.is_dir():
+            raise ValueError(f"{folder_path} is not a valid directory.")
+
+        all_files = sorted([f.name for f in folder_path.glob("*") if f.is_file()])
+        df = pd.DataFrame(
+            {
+                "file name": all_files,
+                "path": [str(folder_path.resolve().as_posix()) + "/"] * len(all_files),
+            }
+        )
+
+        # Save to parent of folder with timestamp
+        today = datetime.now().strftime("%b_%d_%y")  # e.g., Jun_19_25
+        save_path = folder_path.parent / f"input_df_{today}.xlsx"
+
+    else:
+        raise ValueError("You must provide either 'dataframe_path' or 'folder_path'.")
+
+    # Add angular unit
+    df["Angular unit"] = angular_unit
+
+    # Save
+    df.to_excel(save_path, index=False)
+    print(f"Saved cleaned dataframe to: {save_path}")
+
+    return df

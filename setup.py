@@ -2,19 +2,26 @@ from setuptools import setup, find_packages
 
 setup(
     name="saxs_assistant",
-    version="0.1.0",
+    version="0.1.1.dev7",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
-    author_email="youremail@example.com",  # Update this
+    author_email="cr828@scarletmai.rutgers.edu",  # Update this
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     include_package_data=True,
-    package_data={"saxs_assist": ["models/*.joblib"]},
+    package_data={"saxs_assistant": ["models/*.joblib"]},
     install_requires=[
-        # This reads from requirements.txt
-        line.strip()
-        for line in open("requirements.txt")
-        if line and not line.startswith("#")
+        "pandas==2.2.2",
+        "joblib==1.5.1",
+        "matplotlib==3.10.3",
+        "numba==0.61.2",
+        "numpy==1.26.4",
+        "scikit-learn==1.6.1",
+        "scipy==1.15.3",
+        "tqdm==4.67.1",
+        "openpyxl==3.1.5",
+        "pillow==11.2.1",
+        "requests==2.32.4",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
