@@ -155,6 +155,8 @@ def run_analysis(df_wrong, s0=0):
         sample_id = df_wrong["file name"][j]
         logging.info(f"Analyzing {sample_id} ({j + 1}/{len(df_wrong)})")
 
+        skip_sample = False  # Flagging to skip sample if any error occurs
+
         try:
             profile = Profile_Loader.load_profiles(
                 df_wrong["path"][j] + df_wrong["file name"][j]
@@ -176,6 +178,8 @@ def run_analysis(df_wrong, s0=0):
             profile._i_raw = reprocessed_arrays["I"]
             profile._err_raw = reprocessed_arrays["error"]
 
+            q_raw, I_raw, err_raw = profile._q_raw, profile._i_raw, profile._err_raw
+
             profile.q = profile._q_raw
             profile.i = profile._i_raw
             profile.err = profile._err_raw
@@ -186,8 +190,39 @@ def run_analysis(df_wrong, s0=0):
             profile.i = I
             profile.err = err
 
+            # Log Profile
+            try:
+                # used to be plot_2 now profile
+                save_plot(
+                    sample_id,
+                    "profile",
+                    {
+                        "type": "errorbar",
+                        "x": q,
+                        "y": I,
+                        "yerr": err,
+                        "ecolor": "g",
+                        "fmt": "o",
+                        "yscale": "log",
+                        "title": f"Profile of {sample_id}",
+                        "xlabel": "q ($\\AA^{-1}$)",
+                        "ylabel": "Log(I(q))",
+                        "q_truncated": q,
+                        "I_truncated": I,
+                        "err_truncated": err,
+                        "q_untruncated": profile._q_raw,  # these are the untruncated values but sampled
+                        "I_untruncated": profile._i_raw,
+                        "err_untruncated": profile._err_raw,
+                    },
+                )
+                # plt.close(fig)
+            except Exception as e:
+                logging.warning(f"Log profile plot failed for {sample_id}: {e}")
+
         except Exception as e:
             logging.warning(f"Failed to load profile for {sample_id}: {e}")
+            df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Profile Load"
+            plot_data.setdefault(sample_id, {})["Flagged"] = True
             continue
 
         # GPA Plot
@@ -207,6 +242,25 @@ def run_analysis(df_wrong, s0=0):
             )
         except Exception as e:
             logging.warning(f"GPA plot failed for {sample_id}: {e}")
+
+        # Kratky
+        try:
+            kratky_data = get_kratky(q, I, plot=False)
+            save_plot(
+                sample_id,
+                "kratky",
+                {
+                    "type": "line",
+                    "x": kratky_data["x"],
+                    "y": kratky_data["y"],
+                    "xlabel": "q",
+                    "ylabel": "$q^2 I(q)$",
+                    "title": "Kratky Plot",
+                },
+            )
+
+        except Exception as e:
+            logging.warning(f"Kratky plot failed for {sample_id}: {e}")
 
         # AutoRg
         try:
@@ -241,29 +295,27 @@ def run_analysis(df_wrong, s0=0):
                     "AutoRg Rg idx max": idx_max,
                 },
             )
+            plot_data.setdefault(sample_id, {})["Auto Rg"] = {
+                "nmin": idx_min,
+                "nmax": idx_max,
+                "Rg": rg_auto,
+                "i0": i0_auto,
+                "Rg Err": rg_err,
+                "I0 Err": i0_err,
+                "qmin": qmin,
+                "qmax": qmax,
+                "fit qRg Min": qrg_min,
+                "fit qRg Max": qrg_max,
+                "R2": r_sq,
+            }
+
         except Exception as e:
             logging.warning(f"AutoRg failed for {sample_id}: {e}")
-
-        # Kratky
-        try:
-            kratky_data = get_kratky(q, I, plot=False)
-            save_plot(
-                sample_id,
-                "kratky",
-                {
-                    "type": "line",
-                    "x": kratky_data["x"],
-                    "y": kratky_data["y"],
-                    "xlabel": "q",
-                    "ylabel": "$q^2 I(q)$",
-                    "title": "Kratky Plot",
-                },
-            )
-            # print(f"Kratky saved for {sample_id}")
-            # print(f"Kratky data X: {kratky_data[0][:5]}")
-            # print(f"Kratky data Y: {kratky_data[1][:5]}")
-        except Exception as e:
-            logging.warning(f"Kratky plot failed for {sample_id}: {e}")
+            skip_sample = True  # Flag to skip further analysis for this sample
+        if skip_sample:
+            df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Auto Gunier"
+            plot_data.setdefault(sample_id, {})["Flagged"] = True
+            continue
 
         # P(r)
         try:
@@ -317,6 +369,11 @@ def run_analysis(df_wrong, s0=0):
 
         except Exception as e:
             logging.warning(f"Rg Method 1 failed for {sample_id}: {e}")
+            skip_sample = True  # Flag to skip further analysis for this sample
+        if skip_sample:
+            df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Method 1 Initialization"
+            plot_data.setdefault(sample_id, {})["Flagged"] = True
+            continue
 
         # Here doing filtering to get final Rg from method 1
         try:
@@ -354,8 +411,21 @@ def run_analysis(df_wrong, s0=0):
 
             else:
                 logging.warning(f"Method 1 could not resolve Rg for {sample_id}")
+                skip_sample = True  # Flag to skip further analysis for this sample
+                if skip_sample:
+                    df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Method 1 Step 2"
+                    plot_data.setdefault(sample_id, {})["Flagged"] = True
+
+                    continue
         except Exception as e:
             logging.warning(f"Rg Method 1 final selection failed for {sample_id}: {e}")
+            skip_sample = True  # Flag to skip further analysis for this sample
+            if skip_sample:
+                df_wrong.loc[df_wrong.index[j], "Fatal Error"] = (
+                    "Method 1 Final Selection"
+                )
+                plot_data.setdefault(sample_id, {})["Flagged"] = True
+                continue
 
         # Here now making selection for Final Rg based on Mean residuals
         try:
@@ -397,10 +467,29 @@ def run_analysis(df_wrong, s0=0):
                         ][0],
                     },
                 )
+                if selection["Selected Method"] == "Method 1":
+                    df_wrong.loc[df_wrong.index[j], "Final G qRgmin"] = df_wrong.loc[
+                        df_wrong.index[j], "Method 1 qRgmin"
+                    ]
+                    df_wrong.loc[df_wrong.index[j], "Final G qRgmax"] = df_wrong.loc[
+                        df_wrong.index[j], "Method 1 qRgmax"
+                    ]
+                elif selection["Selected Method"] == "AutoRg":
+                    df_wrong.loc[df_wrong.index[j], "Final G qRgmin"] = df_wrong.loc[
+                        df_wrong.index[j], "AutoRg qRg Min"
+                    ]
+                    df_wrong.loc[df_wrong.index[j], "Final G qRgmax"] = df_wrong.loc[
+                        df_wrong.index[j], "AutoRg qRg Max"
+                    ]
 
                 plot_data.setdefault(sample_id, {})["Rg Selection"] = selection
         except Exception as e:
             logging.warning(f"Final Rg selection failed for {sample_id}: {e}")
+            skip_sample = True  # Flag to skip further analysis for this sample
+            if skip_sample:
+                df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Final Rg Selection"
+                plot_data.setdefault(sample_id, {})["Flagged"] = True
+                continue
 
         # Here selecting a Pr from the ones already did
 
@@ -513,6 +602,11 @@ def run_analysis(df_wrong, s0=0):
             logging.warning(
                 f"Failed to extract and select final P(r) for {sample_id}: {e}"
             )
+            skip_sample = True  # Flag to skip further analysis for this sample
+            if skip_sample:
+                df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Final P(r) Selection"
+                plot_data.setdefault(sample_id, {})["Flagged"] = True
+                continue
 
         # --- Franke Feature Extraction and Dimensionless Kratky Storage ---
         try:
@@ -531,8 +625,8 @@ def run_analysis(df_wrong, s0=0):
                 )
 
                 # Now optionally store Dimless Kratky in plot_data
-                qRg = q * final_rg
-                IqRg2 = ((qRg) ** 2) * I / final_i0
+                qRg = q_raw * final_rg
+                IqRg2 = ((qRg) ** 2) * I_raw / final_i0
 
                 plot_data.setdefault(sample_id, {})["Dimless Kratky"] = {
                     "type": "line",
@@ -541,12 +635,18 @@ def run_analysis(df_wrong, s0=0):
                     "xlabel": "qRg",
                     "ylabel": "$(qRg)^2 I(q)/I(0)$",
                     "title": "Dimensionless Kratky",
+                    "qRg": qRg,
+                    "qRg^2": IqRg2,
                 }
 
             else:
                 logging.warning(
                     f"Skipping Franke features, & Dim Kratky for {sample_id} due to invalid Rg/I0"
                 )
+                skip_sample = True  # Flag to skip further analysis for this sample
+                if skip_sample:
+                    df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Franke Features"
+                    continue
             # Here adding the clustering and probabilities
             try:
                 gmm_results = assign_gmm_clusters(df_wrong, j)
@@ -574,29 +674,6 @@ def run_analysis(df_wrong, s0=0):
 
         except Exception as e:
             logging.warning(f"Final Dmax prediction block failed for {sample_id}: {e}")
-
-        # Log Profile
-        try:
-            # used to be plot_2 now profile
-            save_plot(
-                sample_id,
-                "profile",
-                {
-                    "type": "errorbar",
-                    "x": q,
-                    "y": I,
-                    "yerr": err,
-                    "ecolor": "g",
-                    "fmt": "o",
-                    "yscale": "log",
-                    "title": f"Profile of {sample_id}",
-                    "xlabel": "q ($\\AA^{-1}$)",
-                    "ylabel": "Log(I(q))",
-                },
-            )
-            # plt.close(fig)
-        except Exception as e:
-            logging.warning(f"Log profile plot failed for {sample_id}: {e}")
 
     print_end_time(start_time)
     return plot_data, df_wrong

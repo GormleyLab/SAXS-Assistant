@@ -5,3 +5,7 @@ __pycache__/
 .vscode/
 .idea/
 .venv/
+*.json
+!config/default_config.json  # optional: a sample  config might be useful for users
+*.joblib
+

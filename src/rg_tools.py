@@ -414,3 +414,54 @@ def compute_guinier_residuals_Limited(y_exp, y_fit, y_err, q, rg, num_params=1):
         "Reduced Chi Squared": [reduced_chi_squared],
         # 'residual_array': residuals
     }
+
+
+def get_residuals_guinier_plot(I, q, error, nmin, nmax, extra=2):
+    def linearFunc(x, intercept, slope):
+        return intercept + slope * x
+
+    # nmin_ext = max(0, nmin - extra)
+    nmin_ext = 0
+
+    # nmax_ext = min(len(q), nmax + extra + 1)
+    nmax_ext = len(q) - 1
+
+    x_fit = np.array(q[nmin : nmax + 1]) ** 2
+    y_fit = np.log(I[nmin : nmax + 1])
+    err_fit = np.abs(error[nmin : nmax + 1] / I[nmin : nmax + 1])
+    print("just did first log")
+
+    valid = np.isfinite(y_fit)
+    x_fit, y_fit, err_fit = x_fit[valid], y_fit[valid], err_fit[valid]
+
+    a_fit, cov = curve_fit(linearFunc, x_fit, y_fit, sigma=err_fit, absolute_sigma=True)
+    intercept, slope = a_fit
+    y_model = linearFunc(x_fit, intercept, slope)
+
+    residuals = (y_fit - y_model) / err_fit
+    x_mins, x_maxs, y_mins, y_maxs = min_max_function(residuals, x_fit)
+
+    x_all = np.array(q[nmin_ext:nmax_ext]) ** 2
+    with np.errstate(divide="ignore", invalid="ignore"):
+        y_all = np.log(I[nmin_ext:nmax_ext])
+    err_all = np.abs(error[nmin_ext:nmax_ext] / I[nmin_ext:nmax_ext])
+    valid = np.isfinite(y_all)
+    x_all, y_all, err_all = x_all[valid], y_all[valid], err_all[valid]
+    print("did second log")
+
+    return {
+        "x_all": x_all,  # This all the q**2 values that passed mask
+        "y_all": y_all,  # All Ln(i(q)) that arent nan
+        "x_fit": x_fit,  # The actual X_values of the fit (q**2)
+        "y_fit": y_fit,  # The actual Ln(I(q)) values NOT the fit but the data used for it
+        "residuals": residuals,  # The resdiauls in the fit
+        "x_mins": x_mins,  # This if want to plot the mins and max
+        "x_maxs": x_maxs,
+        "y_mins": y_mins,
+        "y_maxs": y_maxs,
+        "nmin_ext": nmin_ext,  # This is always just the first q value
+        "nmax_ext": nmax_ext,  # Always the last q value
+        "y_model": y_model,  # This is the actual fit model, the straight line
+        "Rg": (-3 * slope) ** (1 / 2),
+        "i0": intercept,
+    }
