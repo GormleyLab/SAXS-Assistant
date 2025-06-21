@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="saxs_assistant",
-    version="0.1.1.dev11",
+    version="0.1.1.dev15",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this
@@ -13,7 +13,7 @@ setup(
     install_requires=[
         "pandas==2.2.2",
         "joblib==1.5.1",
-        "matplotlib==3.10.3",
+        "matplotlib==3.10.3",  # matplotlib==3.10.3  #been using 3.10.3 but for somereason now testpipy says cant
         "numba>=0.59,<0.62",  # "numba==0.61.2",
         "numpy>=2.0.0,<3.0.0",  #        "numpy>=1.26.4,<2.0.0",
         "scikit-learn==1.6.1",

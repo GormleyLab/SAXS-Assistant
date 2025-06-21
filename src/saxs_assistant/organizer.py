@@ -26,7 +26,7 @@ def combine_sessions(base_path: str, output_name: str = "final_results"):
     for dir_name in sorted_dirs:
         folder_path = os.path.join(base_path, dir_name)
         results_path = os.path.join(folder_path, "results.xlsx")
-        dict_path = os.path.join(folder_path, "results_dict.joblib")
+        dict_path = os.path.join(folder_path, "plot_data.joblib")
 
         # Read and combine dataframe
         if os.path.exists(results_path):
@@ -48,7 +48,7 @@ def combine_sessions(base_path: str, output_name: str = "final_results"):
         i += 1
     # Save combined results
     combined_df.to_excel(os.path.join(base_path, f"{output_name}.xlsx"), index=False)
-    joblib.dump(combined_dict, os.path.join(base_path, f"{output_name}.joblib"))
+    joblib.dump(combined_dict, os.path.join(base_path, f"{output_name}_Plots.joblib"))
 
     # Move return folders to a subdirectory
     partials_path = os.path.join(base_path, "partials")
@@ -60,6 +60,6 @@ def combine_sessions(base_path: str, output_name: str = "final_results"):
         )
 
     print(
-        f"Combined results saved as '{output_name}.xlsx' and '{output_name}.joblib' in {base_path}"
+        f"Combined results saved as '{output_name}.xlsx' and '{output_name}_Plots.joblib' in {base_path}"
     )
     print(f"Original folders moved to '{partials_path}'")
