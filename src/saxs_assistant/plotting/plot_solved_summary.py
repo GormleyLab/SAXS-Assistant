@@ -6,25 +6,11 @@ from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 from ..features import min_max_function
 from ..rg_tools import get_residuals_guinier_plot
+
+# from .utils.helpers import clean_path
 from joblib import load
 
 
-# def plot_solved_summary(
-#     plot_data_path, output_folder="./summary_plots", pdf_name="solved_summary.pdf"
-# ):
-#     """
-#     Plots the solved data files, if an output folder is not provided then this saves to the same folder where the
-#     plot_data_path is
-#     """
-#     # Load data internally
-#     if isinstance(plot_data_path, str):
-#         plot_data = load(plot_data_path)
-#     else:
-#         raise ValueError("plot_data_path should be a string path to a .joblib file")
-
-
-#     os.makedirs(output_folder, exist_ok=True)
-#     pdf_path = os.path.join(output_folder, pdf_name)
 def plot_solved_summary(
     plot_data_path, output_folder=None, pdf_name="solved_summary.pdf"
 ):

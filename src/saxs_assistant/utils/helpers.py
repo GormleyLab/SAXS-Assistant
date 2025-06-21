@@ -81,7 +81,7 @@ def check_files_in_directory(file_series, directory):
     Parameters:
     -----------
     file_series : pd.Series
-        A pandas Series containing file names to check.
+        A pandas Series containing file names to check. If not given series needs to be a list aka put in []
     directory : str
         The path to the directory where the files should be checked.
     """
@@ -509,3 +509,33 @@ def reprocess_sasbdb_q_values(sasbdb_q, sasbdb_I, sasbdb_error):
 
     # Return reprocessed dataset
     return {"q": selected_q, "I": selected_I, "error": selected_error}
+
+
+import os
+
+
+def clean_path(path_str, resolve_absolute=True):
+    """
+    Cleans up a path string, fixing Windows-style slashes and removing extra quotes.
+
+    Args:
+        path_str (str): The raw path string.
+        resolve_absolute (bool): Whether to resolve to absolute path.
+
+    Returns:
+        str: Cleaned-up path.
+    """
+    if not isinstance(path_str, str):
+        raise TypeError("Path must be a string.")
+
+    # Strip quotes and whitespace
+    path_str = path_str.strip().strip('"').strip("'")
+
+    # Replace backslashes with forward slashes
+    cleaned = path_str.replace("\\", "/")
+
+    # Optionally resolve absolute path
+    if resolve_absolute:
+        cleaned = os.path.abspath(cleaned)
+
+    return cleaned
