@@ -14,6 +14,9 @@ from pathlib import Path
 import os
 from tqdm import tqdm
 import logging
+import pandas as pd
+from pathlib import Path
+from datetime import datetime
 from joblib import load, dump
 from .rawutils import sasm as SASM
 
@@ -30,6 +33,7 @@ from .ML import (
     predict_dmax_from_features_only,
     assign_gmm_clusters,
     compute_franke_features,
+    load_model,
 )
 
 
@@ -49,7 +53,7 @@ logging.basicConfig(level=logging.INFO)
 plot_data = {}
 
 
-def get_unique_output_dir(base_dir="results"):
+def get_unique_output_dir(base_dir: Path):  # before said "results"
     """Create a unique output directory by appending an index if the base directory already exists.
     Used in the analyze_and_save function to ensure results are saved in a unique directory, for when multiple instances of script are ran simultaneously.
     This prevents overwriting results from previous runs. Also usful for future steps when updating and combining results.
@@ -156,6 +160,10 @@ def print_end_time(start_time):
 # multiple try blocks-Prevents overall failure if certain analysis cannot be done
 logging.basicConfig(level=logging.ERROR)
 
+
+# Loading the models once to prevent slow down now bundel_path is actually the bundle in the fn
+dmax_bundle = load_model("dmax_predictor_2bundle_05262025.joblib")
+gmm_bundle = load_model("gmm_cluster_2bundle_05262025.joblib")
 
 # multiple try blocks-Prevents overall failure if certain analysis cannot be done
 
@@ -669,7 +677,7 @@ def run_analysis(df_wrong, s0=0):
                     continue
             # Here adding the clustering and probabilities
             try:
-                gmm_results = assign_gmm_clusters(df_wrong, j)
+                gmm_results = assign_gmm_clusters(df_wrong, j, gmm_bundle)
                 if gmm_results:
                     plot_data.setdefault(sample_id, {})["GMM Clustering"] = gmm_results
             except Exception as e:
@@ -678,7 +686,9 @@ def run_analysis(df_wrong, s0=0):
         except Exception as e:
             logging.warning(f"Franke block failed for {sample_id}: {e}")
         try:
-            pred_dmax, dmax_feats = predict_dmax_from_features_only(df_wrong, j)
+            pred_dmax, dmax_feats = predict_dmax_from_features_only(
+                df_wrong, j, dmax_bundle
+            )
 
             df_wrong.loc[df_wrong.index[j], "Predicted Dmax"] = pred_dmax
 
@@ -750,8 +760,8 @@ def analyze_and_save(df_path, start_index=0, end_index=None, output_dir=None):
     # Save results
     # Only apply auto-folder logic if output_dir wasn't specified
     # This makes sure no overwriting happens if multiple instances of the script are run simultaneously
-    if output_dir == "outputs":
-        output_dir = get_unique_output_dir("results")
+    if output_dir == "outputs" or Path(output_dir).exists():
+        output_dir = get_unique_output_dir(output_dir)
     else:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -760,11 +770,6 @@ def analyze_and_save(df_path, start_index=0, end_index=None, output_dir=None):
     updated_df.to_excel(output_dir / "results.xlsx")
     beep()  # Notify user that analysis is complete
     return plot_data, updated_df
-
-
-import pandas as pd
-from pathlib import Path
-from datetime import datetime
 
 
 def prepare_dataframe(dataframe_path=None, folder_path=None, angular_unit=None):

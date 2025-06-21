@@ -88,3 +88,8 @@ if __name__ == "__main__":
 
 
 # python main.py --config config.json   #run this to test
+
+
+# Yank the files after when done
+
+# twine yank saxs_assistant1 -v 0.1.1.dev10

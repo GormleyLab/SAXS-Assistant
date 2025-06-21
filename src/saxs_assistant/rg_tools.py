@@ -429,7 +429,6 @@ def get_residuals_guinier_plot(I, q, error, nmin, nmax, extra=2):
     x_fit = np.array(q[nmin : nmax + 1]) ** 2
     y_fit = np.log(I[nmin : nmax + 1])
     err_fit = np.abs(error[nmin : nmax + 1] / I[nmin : nmax + 1])
-    print("just did first log")
 
     valid = np.isfinite(y_fit)
     x_fit, y_fit, err_fit = x_fit[valid], y_fit[valid], err_fit[valid]
@@ -447,7 +446,6 @@ def get_residuals_guinier_plot(I, q, error, nmin, nmax, extra=2):
     err_all = np.abs(error[nmin_ext:nmax_ext] / I[nmin_ext:nmax_ext])
     valid = np.isfinite(y_all)
     x_all, y_all, err_all = x_all[valid], y_all[valid], err_all[valid]
-    print("did second log")
 
     return {
         "x_all": x_all,  # This all the q**2 values that passed mask

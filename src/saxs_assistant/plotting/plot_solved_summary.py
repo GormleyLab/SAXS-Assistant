@@ -9,18 +9,44 @@ from ..rg_tools import get_residuals_guinier_plot
 from joblib import load
 
 
+# def plot_solved_summary(
+#     plot_data_path, output_folder="./summary_plots", pdf_name="solved_summary.pdf"
+# ):
+#     """
+#     Plots the solved data files, if an output folder is not provided then this saves to the same folder where the
+#     plot_data_path is
+#     """
+#     # Load data internally
+#     if isinstance(plot_data_path, str):
+#         plot_data = load(plot_data_path)
+#     else:
+#         raise ValueError("plot_data_path should be a string path to a .joblib file")
+
+
+#     os.makedirs(output_folder, exist_ok=True)
+#     pdf_path = os.path.join(output_folder, pdf_name)
 def plot_solved_summary(
-    plot_data_path, output_folder="./summary_plots", pdf_name="solved_summary.pdf"
+    plot_data_path, output_folder=None, pdf_name="solved_summary.pdf"
 ):
-    # Load data internally
+    """
+    Plots the solved data files. If an output folder is not provided,
+    saves to the same folder where the plot_data_path is located.
+    """
+    # This so user dont hvae to think bout extension and if they do itll also be fine
+    if not pdf_name.lower().endswith(".pdf"):
+        pdf_name += ".pdf"
+    # Load data
     if isinstance(plot_data_path, str):
         plot_data = load(plot_data_path)
     else:
         raise ValueError("plot_data_path should be a string path to a .joblib file")
 
+    # Set output folder to same directory as plot_data_path if not provided
+    if output_folder is None:
+        output_folder = os.path.dirname(plot_data_path)
+
     os.makedirs(output_folder, exist_ok=True)
     pdf_path = os.path.join(output_folder, pdf_name)
-
     with PdfPages(pdf_path) as pdf:
         for sample_id, plot_item in plot_data.items():
             if "Flagged" in plot_item:
@@ -87,7 +113,7 @@ def plot_solved_summary(
             gs2 = gridspec.GridSpecFromSubplotSpec(
                 1, 3, subplot_spec=outer_gs[1], width_ratios=[2.8, 2.8, 0.9], wspace=0.4
             )
-
+            selected = plot_item["Rg Selection"]["Selected Method"]
             for idx, label, rg_key in zip(
                 [0, 1],
                 ["Auto $R_g$", "PDDF-Informed"],
@@ -151,7 +177,11 @@ def plot_solved_summary(
                 ax.set_title(label, fontsize=7.5)
                 ax.legend(fontsize=6.5)
                 ax.tick_params(labelsize=7)
-                if idx == 1:
+                if idx == 1 and selected == "Method 1":
+                    for spine in ax.spines.values():
+                        spine.set_edgecolor("green")
+                        spine.set_linewidth(2)
+                elif idx == 0 and selected == "AutoRg":
                     for spine in ax.spines.values():
                         spine.set_edgecolor("green")
                         spine.set_linewidth(2)
@@ -255,7 +285,8 @@ def plot_solved_summary(
                 [results_auto["y_model"].min() - 0.5, results_auto["y_all"].max() + 0.5]
             )
             ax_top.set_xlim(
-                [0, results_auto["x_fit"][-1] + (results_auto["x_fit"].ptp() * 0.10)]
+                # [0, results_auto["x_fit"][-1] + (results_auto["x_fit"].ptp() * 0.10)]
+                [0, results_auto["x_fit"][-1] + (np.ptp(results_auto["x_fit"]) * 0.10)]
             )
             ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
             ax_top.legend(fontsize=6.5, loc="upper right")
@@ -326,7 +357,8 @@ def plot_solved_summary(
                 [results_m1["y_model"].min() - 0.5, results_m1["y_all"].max() + 0.5]
             )
             ax_top.set_xlim(
-                [0, results_m1["x_fit"][-1] + (results_m1["x_fit"].ptp() * 0.10)]
+                [0, results_m1["x_fit"][-1] + (np.ptp(results_m1["x_fit"] * 0.10))]
+                # [0, results_m1["x_fit"][-1] + (results_m1["x_fit"].ptp() * 0.10)] #Not compatibl w numpy2.0.0
             )
             ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
             ax_top.legend(fontsize=6.5, loc="upper right")
@@ -472,7 +504,9 @@ def get_dim_GPA2(I, q, rg, i0, nmin, nmax, plot=False):
         y_maxs (float): Maximum y value.
         plot_params (dict): Dictionary containing plot parameters.
     """
-    y = np.log((q * rg * I) / i0)
+    # This happens w krarkys sometimes, just plotting so turned it off
+    with np.errstate(divide="ignore", invalid="ignore"):
+        y = np.log((q * rg * I) / i0)
     x = (q * rg) ** 2
     index_max_y = np.argmax(y)
     index_max_plot = np.argmin(abs(x - 4))

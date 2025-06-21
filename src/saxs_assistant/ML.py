@@ -35,18 +35,20 @@ def compute_franke_features(q, I, rg, i0, sample_id, df, j):
     return df
 
 
-def predict_dmax_from_features_only(
-    df, j, bundle_path="dmax_predictor_2bundle_05262025.joblib"
-):
+def predict_dmax_from_features_only(df, j, bundle_path=None):
+    # "dmax_predictor_2bundle_05262025.joblib"  -- Now loading in runner to prevent slowdown
     # bundle_path=r"models\dmax_predictor_2bundle_05262025.joblib" no longer using cause resources
+
     """
     Loads model bundle and predicts Dmax for row j of df.
     Returns the predicted Dmax and feature values used.
     The name of the model bundle must remain the same for it to work
+    Need to path the actual bundle now instead of the path as this is loaded in the main script
+
     """
     try:
         # bundle = load(bundle_path)
-        bundle = load_model(bundle_path)
+        bundle = bundle_path  # load_model(bundle_path)
         model = bundle["model"]
         scaler = bundle["scaler"]
         feature_names = bundle["features"]
@@ -81,17 +83,19 @@ def predict_dmax_from_features_only(
         return np.nan, {"error": str(e)}
 
 
-def assign_gmm_clusters(df, j, bundle_path="gmm_cluster_2bundle_05262025.joblib"):
+def assign_gmm_clusters(df, j, bundle_path=None):
+    # "gmm_cluster_2bundle_05262025.joblib" --- Now passing as bundle in main script
     # bundle_path=r"models\gmm_cluster_2bundle_05262025.joblib" no longer using cause resources
     """
     Loads model bundle and predicts cluster probabilities using GMM for row j of df.
     Returns the predicted cluster and feature values used.
     The name of the model bundle must remain the same for it to work
+    instead of a path now needs the model bundle passed
     """
 
     try:
         # bundle = load(bundle_path)
-        bundle = load_model(bundle_path)
+        bundle = bundle_path  # load_model(bundle_path)
         model = bundle["model"]
         scaler = bundle["scaler"]
         features = bundle["features"]

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="saxs_assistant",
-    version="0.1.1.dev8",
+    version="0.1.1.dev11",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this
@@ -15,13 +15,14 @@ setup(
         "joblib==1.5.1",
         "matplotlib==3.10.3",
         "numba>=0.59,<0.62",  # "numba==0.61.2",
-        "numpy>=1.26.4,<3.0.0",
+        "numpy>=2.0.0,<3.0.0",  #        "numpy>=1.26.4,<2.0.0",
         "scikit-learn==1.6.1",
         "scipy==1.15.3",
         "tqdm==4.67.1",
         "openpyxl==3.1.5",
         "pillow==11.2.1",
         "requests>=2.32,<3",
+        "natsort",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
