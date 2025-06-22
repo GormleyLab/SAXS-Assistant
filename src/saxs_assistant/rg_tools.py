@@ -333,6 +333,10 @@ def select_best_rg_method(
     i01_err=None,
     r2_auto=None,
     r2_1=None,
+    nmin_auto=None,
+    nmax_auto=None,
+    m1_nmin=None,
+    m1_nmax=None,
     sample_id="unknown",
 ):
     """
@@ -351,6 +355,21 @@ def select_best_rg_method(
         mean_auto = res_auto["residual_mean"][0]
         mean_1 = res_1["residual_mean"][0]
 
+        # If Method 1 exists, check if AutoRg quality is acceptable
+        # This prevents loosing a good method 1 result when auto did bad as for example for a file had both give similar Rg
+        # But auto had R2 ~ 0.3 but bc residuals were better it got chosen but then the file gets marked as unsolved
+
+        method1_exists = res_1 is not None and "residual_mean" in res_1
+
+        if method1_exists:
+            auto_too_few_points = (nmax_auto - nmin_auto + 1) < 7
+            auto_low_r2 = r2_auto < 0.73
+
+            if auto_too_few_points or auto_low_r2:
+                # Penalize AutoRg to favor Method 1
+                mean_auto = res_1["residual_mean"][0] + 999
+                # If method 1 doesnt exist and auto has bad r2 or num point outter catches it
+
         if mean_auto <= mean_1:
             selected = "AutoRg"
             final_rg, final_i0 = rg_auto, i0_auto
@@ -359,6 +378,8 @@ def select_best_rg_method(
             final_res = res_auto
             final_qrgmin = rg_auto * min(q)
             final_qrgmax = rg_auto * max(q)
+            final_nmin = nmin_auto
+            final_nmax = nmax_auto
 
         else:
             selected = "Method 1"
@@ -368,6 +389,8 @@ def select_best_rg_method(
             final_res = res_1
             final_qrgmin = rg1 * min(q)
             final_qrgmax = rg1 * max(q)
+            final_nmin = m1_nmin
+            final_nmax = m1_nmax
 
         return {
             "Final Rg": final_rg,
@@ -379,6 +402,8 @@ def select_best_rg_method(
             "Residual Stats": final_res,
             "Final qRg min": final_qrgmin,
             "Final qRg max": final_qrgmax,
+            "Final nmin": final_nmin,
+            "Final nmax": final_nmax,
         }
 
     except Exception as e:

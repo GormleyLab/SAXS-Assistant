@@ -338,12 +338,14 @@ def run_analysis(df_wrong, s0=0):
             }
 
         except Exception as e:
-            logging.warning(f"AutoRg failed for {sample_id}: {e}")
-            skip_sample = True  # Flag to skip further analysis for this sample
-        if skip_sample:
-            df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Auto Gunier"
-            plot_data.setdefault(sample_id, {})["Flagged"] = True
-            continue
+            #     logging.warning(f"AutoRg failed for {sample_id}: {e}")
+            #     skip_sample = True  # Flag to skip further analysis for this sample
+            # if skip_sample:
+            #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Auto Gunier"
+            #     plot_data.setdefault(sample_id, {})["Flagged"] = True
+            #     continue
+            # Dont need to bc method 1 could do fine this will just add -1
+            pass
 
         # P(r)
         try:
@@ -438,22 +440,26 @@ def run_analysis(df_wrong, s0=0):
                 )
 
             else:
-                logging.warning(f"Method 1 could not resolve Rg for {sample_id}")
-                skip_sample = True  # Flag to skip further analysis for this sample
-                if skip_sample:
-                    df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Method 1 Step 2"
-                    plot_data.setdefault(sample_id, {})["Flagged"] = True
+                # logging.warning(f"Method 1 could not resolve Rg for {sample_id}")
+                plot_data.setdefault(sample_id, {})["Method 1 Fail"] = True
 
-                    continue
+                # skip_sample = True  # Flag to skip further analysis for this sample
+                # if skip_sample:
+                #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Method 1 Step 2"
+                #     plot_data.setdefault(sample_id, {})["Flagged"] = True
+
+                #     continue
         except Exception as e:
-            logging.warning(f"Rg Method 1 final selection failed for {sample_id}: {e}")
-            skip_sample = True  # Flag to skip further analysis for this sample
-            if skip_sample:
-                df_wrong.loc[df_wrong.index[j], "Fatal Error"] = (
-                    "Method 1 Final Selection"
-                )
-                plot_data.setdefault(sample_id, {})["Flagged"] = True
-                continue
+            # logging.warning(f"Rg Method 1 final selection failed for {sample_id}: {e}")
+            plot_data.setdefault(sample_id, {})["Method 1 Fail"] = True
+
+            # skip_sample = True  # Flag to skip further analysis for this sample
+            # if skip_sample:
+            #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = (
+            #         "Method 1 Final Selection"
+            #     )
+            # plot_data.setdefault(sample_id, {})["Flagged"] = True #causin loss
+            # continue #causing loss
 
         # Here now making selection for Final Rg based on Mean residuals
         try:
@@ -471,6 +477,10 @@ def run_analysis(df_wrong, s0=0):
                 i01_err=best_fit["I0 Err"],
                 r2_auto=df_wrong.loc[j, "AutoRg Guinier R²"],
                 r2_1=best_fit["fit_r2"],
+                nmin_auto=df_wrong.loc[j, "AutoRg Rg idx min"],
+                nmax_auto=df_wrong.loc[j, "AutoRg Rg idx max"],
+                m1_nmin=best_fit["nmin"],
+                m1_nmax=best_fit["nmax"],
                 sample_id=sample_id,
             )
 
@@ -490,9 +500,8 @@ def run_analysis(df_wrong, s0=0):
                         "Final Rg Residual Mean": selection["Residual Stats"][
                             "residual_mean"
                         ][0],
-                        "Final Rg Reduced Chi²": selection["Residual Stats"][
-                            "Reduced Chi Squared"
-                        ][0],
+                        "Final Rg nmin": selection["Final nmin"],
+                        "Final Rg nmax": selection["Final nmax"],
                     },
                 )
                 if selection["Selected Method"] == "Method 1":
@@ -502,6 +511,7 @@ def run_analysis(df_wrong, s0=0):
                     df_wrong.loc[df_wrong.index[j], "Final G qRgmax"] = df_wrong.loc[
                         df_wrong.index[j], "Method 1 qRgmax"
                     ]
+                    plot_data.setdefault(sample_id, {})["Rg Selection"] = selection
                 elif selection["Selected Method"] == "AutoRg":
                     df_wrong.loc[df_wrong.index[j], "Final G qRgmin"] = df_wrong.loc[
                         df_wrong.index[j], "AutoRg qRg Min"
@@ -510,7 +520,39 @@ def run_analysis(df_wrong, s0=0):
                         df_wrong.index[j], "AutoRg qRg Max"
                     ]
 
-                plot_data.setdefault(sample_id, {})["Rg Selection"] = selection
+                    plot_data.setdefault(sample_id, {})["Rg Selection"] = selection
+
+                    # ---- Final Sanity Check: Flag Bad Selections from Auto if Method 1 failed ----
+                    # as if method 1 failed auto would be selected regardless
+
+                    rg_value = selection["Final Rg"]
+                    r2_value = selection["Final R²"]
+                    qRg_min = selection["Final qRg min"]
+                    qRg_max = selection["Final qRg max"]
+                    nmin_rg = selection["Final nmin"]
+                    nmax_rg = selection["Final nmax"]
+                    num_points = nmax_rg - nmin_rg
+                    if nmin_rg == 0 and nmax_rg == 6:
+                        num_points += 1
+
+                    flag_reason = None
+                    if rg_value == -1:
+                        flag_reason = "Rg is -1"
+                    elif num_points < 7:
+                        flag_reason = f"Fewer than 7 points ({num_points})"
+                    elif r2_value < 0.73:
+                        flag_reason = f"Low R² ({r2_value:.2f})"
+
+                    if flag_reason:
+                        # Save in DataFrame
+                        df_wrong.loc[df_wrong.index[j], "Fatal Error"] = (
+                            "M1 Failed Auto couldn't meet Thresholds (R>0.73 and npoints >=7)"
+                        )
+                        plot_data.setdefault(sample_id, {})["Flagged"] = (
+                            True  # causin loss
+                        )
+                        continue
+
         except Exception as e:
             logging.warning(f"Final Rg selection failed for {sample_id}: {e}")
             skip_sample = True  # Flag to skip further analysis for this sample

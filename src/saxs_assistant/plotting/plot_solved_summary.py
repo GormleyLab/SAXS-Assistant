@@ -106,6 +106,26 @@ def plot_solved_summary(
                 ["Auto Rg", "Rg Method 1 Final"],
             ):
                 ax = fig.add_subplot(gs2[0, idx])
+
+                # Use this to test -1 auto rg #.get("Rg", -1) == -1
+
+                if rg_key not in plot_item or (
+                    rg_key == "Auto Rg" and plot_item[rg_key]["Rg"] == -1
+                ):
+                    # Method failed — Maybe will add a picture later on
+                    # img = mpimg.imread("method_failed.png")
+                    # ax.imshow(img)
+                    # ax.axis("off")
+                    ax.text(
+                        0.5,
+                        0.5,
+                        f"{label} Failed",
+                        fontsize=9,
+                        ha="center",
+                        va="center",
+                    )
+                    ax.set_axis_off()  # optionally turn off the axis
+                    continue  # skip to next subplot
                 rg = plot_item[rg_key]["Rg"] if idx == 0 else plot_item[rg_key]["Rg"][0]
                 i0 = plot_item[rg_key]["i0"] if idx == 0 else plot_item[rg_key]["i0"][0]
                 nmin = (
@@ -171,6 +191,20 @@ def plot_solved_summary(
                     for spine in ax.spines.values():
                         spine.set_edgecolor("green")
                         spine.set_linewidth(2)
+                elif idx == 0 and "Auto Rg" in plot_item:
+                    # Get makes sure wont crash if no key but if there is will get it
+                    nmin = plot_item["Auto Rg"].get("nmin", 0)
+                    nmax = plot_item["Auto Rg"].get("nmax", 0)
+                    auto_wind = nmax - nmin
+                    r2_from_auto = plot_item["Auto Rg"].get("R2", 0)
+
+                    if (auto_wind < 7) or (r2_from_auto < 0.73):
+                        # Special case since 0 is an index, so if 0 and window = 6 and r2 is good keep it
+                        if not (nmin == 0 and auto_wind == 6 and r2_from_auto >= 0.73):
+                            # flag with red spine
+                            for spine in ax.spines.values():
+                                spine.set_edgecolor("red")
+                                spine.set_linewidth(2)
 
             ax3 = fig.add_subplot(gs2[0, 2])
             prob_found = plot_item["GMM Clustering"]["Probabilities"]
@@ -218,143 +252,202 @@ def plot_solved_summary(
             )
 
             # ---------- Left Column: Auto Guinier ----------
-            results_auto = get_residuals_guinier_plot(
-                plot_item["profile"]["y"],
-                plot_item["profile"]["x"],
-                plot_item["profile"]["yerr"],
-                plot_item["Auto Rg"]["nmin"],
-                plot_item["Auto Rg"]["nmax"],
-            )
-            ax_top = fig.add_subplot(gs3[0, 0])
-            ax_bot = fig.add_subplot(gs3[1, 0], sharex=ax_top)
+            if "Auto Rg" not in plot_item or plot_item["Auto Rg"].get("Rg", -1) == -1:
+                ax_top = fig.add_subplot(gs3[0, 0])
+                ax_bot = fig.add_subplot(gs3[1, 0], sharex=ax_top)
+                ax_top.set_title("Auto Guinier Failed", fontsize=7)
+                ax_bot.set_title("Auto Guinier Failed", fontsize=7)
+                ax_top.axis("off")
+                ax_bot.axis("off")
+            else:  # For if auto fails plotting will be fine for the method that worked
+                results_auto = get_residuals_guinier_plot(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["profile"]["yerr"],
+                    plot_item["Auto Rg"]["nmin"],
+                    plot_item["Auto Rg"]["nmax"],
+                )
+                ax_top = fig.add_subplot(gs3[0, 0])
+                ax_bot = fig.add_subplot(gs3[1, 0], sharex=ax_top)
 
-            ax_top.plot(
-                results_auto["x_all"],
-                results_auto["y_all"],
-                "o",
-                color="gray",
-                alpha=0.8,
-                markersize=2,
-            )
-            ax_top.plot(
-                results_auto["x_fit"],
-                results_auto["y_fit"],
-                "o",
-                color="blue",
-                markersize=2,
-            )
-            ax_top.plot(
-                results_auto["x_fit"],
-                results_auto["y_model"],
-                "-",
-                color="red",
-                linewidth=1,
-                label=r"$R^2$ " + str(round(plot_item["Auto Rg"]["R2"], 3)),
-            )
-            ax_top.set_title(
-                "Auto Guinier: $R_g$: "
-                + str(round(plot_item["Auto Rg"]["Rg"], 2))
-                + r"$\pm$"
-                + str(round(plot_item["Auto Rg"]["Rg Err"], 2)),
-                fontsize=7,
-            )
+                ax_top.plot(
+                    results_auto["x_all"],
+                    results_auto["y_all"],
+                    "o",
+                    color="gray",
+                    alpha=0.8,
+                    markersize=2,
+                )
+                ax_top.plot(
+                    results_auto["x_fit"],
+                    results_auto["y_fit"],
+                    "o",
+                    color="blue",
+                    markersize=2,
+                )
+                ax_top.plot(
+                    results_auto["x_fit"],
+                    results_auto["y_model"],
+                    "-",
+                    color="red",
+                    linewidth=1,
+                    label=r"$R^2$ " + str(round(plot_item["Auto Rg"]["R2"], 3)),
+                )
+                ax_top.set_title(
+                    "Auto Guinier: $R_g$: "
+                    + str(round(plot_item["Auto Rg"]["Rg"], 2))
+                    + r"$\pm$"
+                    + str(round(plot_item["Auto Rg"]["Rg Err"], 2)),
+                    fontsize=7,
+                )
 
-            ax_top.set_ylabel(r"$\ln[I(q)]$", fontsize=7)
-            ax_top.tick_params(axis="both", which="major", labelsize=7)
-            ax_top.axvline(
-                x=results_auto["x_fit"][0], linestyle="--", color="red", linewidth=1
-            )
-            ax_top.axvline(
-                x=results_auto["x_fit"][-1], linestyle="--", color="red", linewidth=1
-            )
-            ax_top.set_ylim(
-                [results_auto["y_model"].min() - 0.5, results_auto["y_all"].max() + 0.5]
-            )
-            ax_top.set_xlim(
-                # [0, results_auto["x_fit"][-1] + (results_auto["x_fit"].ptp() * 0.10)]
-                [0, results_auto["x_fit"][-1] + (np.ptp(results_auto["x_fit"]) * 0.10)]
-            )
-            ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
-            ax_top.legend(fontsize=6.5, loc="upper right")
+                ax_top.set_ylabel(r"$\ln[I(q)]$", fontsize=7)
+                ax_top.tick_params(axis="both", which="major", labelsize=7)
+                ax_top.axvline(
+                    x=results_auto["x_fit"][0], linestyle="--", color="red", linewidth=1
+                )
+                ax_top.axvline(
+                    x=results_auto["x_fit"][-1],
+                    linestyle="--",
+                    color="red",
+                    linewidth=1,
+                )
+                ax_top.set_ylim(
+                    [
+                        results_auto["y_model"].min() - 0.5,
+                        results_auto["y_all"].max() + 0.5,
+                    ]
+                )
+                ax_top.set_xlim(
+                    # [0, results_auto["x_fit"][-1] + (results_auto["x_fit"].ptp() * 0.10)]
+                    [
+                        0,
+                        results_auto["x_fit"][-1]
+                        + (np.ptp(results_auto["x_fit"]) * 0.10),
+                    ]
+                )
+                ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
+                ax_top.legend(fontsize=6.5, loc="upper right")
 
-            ax_bot.plot(
-                results_auto["x_fit"], results_auto["residuals"], "b-", linewidth=1
-            )
-            ax_bot.axhline(y=0, linestyle="--", color="red", linewidth=1)
-            ax_bot.set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
-            ax_bot.xaxis.set_major_formatter(FormatStrFormatter("%.4f"))
-            ax_bot.set_ylabel(r"$\Delta \ln[I(q)] / \sigma(q)$", fontsize=7)
-            ax_bot.tick_params(axis="both", which="major", labelsize=7)
+                # After ax_top.set_title(...)
+                warning_lines = []
+
+                # Check thresholds
+                if plot_item["Auto Rg"].get("R2", 1) < 0.73:
+                    warning_lines.append(r"$R^2$ < 0.73")
+                if (nmax - nmin) < 7:
+                    # Special case: nmin=0 and nmax=6 → actually 7 points
+                    if not (nmin == 0 and (nmax - nmin) == 6):
+                        warning_lines.append("Fewer than 7 points")
+
+                # If any warnings exist, plot the text
+                if warning_lines:
+                    warning_text = "\n".join(warning_lines)
+                    ax_top.text(
+                        0.95,
+                        0.05,  # Position: bottom-right corner in axes coords
+                        warning_text,
+                        transform=ax_top.transAxes,
+                        fontsize=6.5,
+                        color="red",
+                        ha="right",
+                        va="bottom",
+                        bbox=dict(
+                            boxstyle="round,pad=0.3",
+                            edgecolor="red",
+                            facecolor="white",
+                            alpha=0.8,
+                        ),
+                    )
+
+                ax_bot.plot(
+                    results_auto["x_fit"], results_auto["residuals"], "b-", linewidth=1
+                )
+                ax_bot.axhline(y=0, linestyle="--", color="red", linewidth=1)
+                ax_bot.set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
+                ax_bot.xaxis.set_major_formatter(FormatStrFormatter("%.4f"))
+                ax_bot.set_ylabel(r"$\Delta \ln[I(q)] / \sigma(q)$", fontsize=7)
+                ax_bot.tick_params(axis="both", which="major", labelsize=7)
 
             # ---------- Right Column: Method 1 ----------
-            results_m1 = get_residuals_guinier_plot(
-                plot_item["profile"]["y"],
-                plot_item["profile"]["x"],
-                plot_item["profile"]["yerr"],
-                plot_item["Rg Method 1 Final"]["nmin"][0],
-                plot_item["Rg Method 1 Final"]["nmax"][0],
-            )
-            ax_top = fig.add_subplot(gs3[0, 1])
-            ax_bot = fig.add_subplot(gs3[1, 1], sharex=ax_top)
+            if "Rg Method 1 Final" not in plot_item:  # If method 1 failed
+                ax_top = fig.add_subplot(gs3[0, 1])
+                ax_bot = fig.add_subplot(gs3[1, 1], sharex=ax_top)
+                ax_top.set_title("Method 1 Failed", fontsize=7)
+                ax_bot.set_title("Method 1 Failed", fontsize=7)
+                ax_top.axis("off")
+                ax_bot.axis("off")
+            else:
+                results_m1 = get_residuals_guinier_plot(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["profile"]["yerr"],
+                    plot_item["Rg Method 1 Final"]["nmin"][0],
+                    plot_item["Rg Method 1 Final"]["nmax"][0],
+                )
+                ax_top = fig.add_subplot(gs3[0, 1])
+                ax_bot = fig.add_subplot(gs3[1, 1], sharex=ax_top)
 
-            # ax_top, ax_bot = axes[0, 1], axes[1, 1]
+                # ax_top, ax_bot = axes[0, 1], axes[1, 1]
 
-            ax_top.plot(
-                results_m1["x_all"],
-                results_m1["y_all"],
-                "o",
-                color="gray",
-                alpha=0.8,
-                markersize=2,
-            )
-            ax_top.plot(
-                results_m1["x_fit"],
-                results_m1["y_fit"],
-                "o",
-                color="blue",
-                markersize=2,
-            )
-            ax_top.plot(
-                results_m1["x_fit"],
-                results_m1["y_model"],
-                "-",
-                color="red",
-                linewidth=1,
-                label=r"$R^2$ "
-                + str(round(plot_item["Rg Method 1 Final"]["fit_r2"][0], 3)),
-            )
-            ax_top.set_title(
-                "PDDF-Informed: $R_g$: "
-                + str(round(plot_item["Rg Method 1 Final"]["Rg"][0], 2))
-                + r"$\pm$"
-                + str(round(plot_item["Rg Method 1 Final"]["Rg Err"][0], 2)),
-                fontsize=7,
-            )
+                ax_top.plot(
+                    results_m1["x_all"],
+                    results_m1["y_all"],
+                    "o",
+                    color="gray",
+                    alpha=0.8,
+                    markersize=2,
+                )
+                ax_top.plot(
+                    results_m1["x_fit"],
+                    results_m1["y_fit"],
+                    "o",
+                    color="blue",
+                    markersize=2,
+                )
+                ax_top.plot(
+                    results_m1["x_fit"],
+                    results_m1["y_model"],
+                    "-",
+                    color="red",
+                    linewidth=1,
+                    label=r"$R^2$ "
+                    + str(round(plot_item["Rg Method 1 Final"]["fit_r2"][0], 3)),
+                )
+                ax_top.set_title(
+                    "PDDF-Informed: $R_g$: "
+                    + str(round(plot_item["Rg Method 1 Final"]["Rg"][0], 2))
+                    + r"$\pm$"
+                    + str(round(plot_item["Rg Method 1 Final"]["Rg Err"][0], 2)),
+                    fontsize=7,
+                )
 
-            ax_top.set_ylabel(r"$\ln[I(q)]$", fontsize=7)
-            ax_top.tick_params(axis="both", which="major", labelsize=7)
-            ax_top.axvline(
-                x=results_m1["x_fit"][0], linestyle="--", color="red", linewidth=1
-            )
-            ax_top.axvline(
-                x=results_m1["x_fit"][-1], linestyle="--", color="red", linewidth=1
-            )
-            ax_top.set_ylim(
-                [results_m1["y_model"].min() - 0.5, results_m1["y_all"].max() + 0.5]
-            )
-            ax_top.set_xlim(
-                [0, results_m1["x_fit"][-1] + (np.ptp(results_m1["x_fit"] * 0.10))]
-                # [0, results_m1["x_fit"][-1] + (results_m1["x_fit"].ptp() * 0.10)] #Not compatibl w numpy2.0.0
-            )
-            ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
-            ax_top.legend(fontsize=6.5, loc="upper right")
+                ax_top.set_ylabel(r"$\ln[I(q)]$", fontsize=7)
+                ax_top.tick_params(axis="both", which="major", labelsize=7)
+                ax_top.axvline(
+                    x=results_m1["x_fit"][0], linestyle="--", color="red", linewidth=1
+                )
+                ax_top.axvline(
+                    x=results_m1["x_fit"][-1], linestyle="--", color="red", linewidth=1
+                )
+                ax_top.set_ylim(
+                    [results_m1["y_model"].min() - 0.5, results_m1["y_all"].max() + 0.5]
+                )
+                ax_top.set_xlim(
+                    [0, results_m1["x_fit"][-1] + (np.ptp(results_m1["x_fit"] * 0.10))]
+                    # [0, results_m1["x_fit"][-1] + (results_m1["x_fit"].ptp() * 0.10)] #Not compatibl w numpy2.0.0
+                )
+                ax_top.tick_params(labelbottom=False)  # hides x-tick labels on top
+                ax_top.legend(fontsize=6.5, loc="upper right")
 
-            ax_bot.plot(results_m1["x_fit"], results_m1["residuals"], "b-", linewidth=1)
-            ax_bot.axhline(y=0, linestyle="--", color="red", linewidth=1)
-            ax_bot.set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
-            ax_bot.xaxis.set_major_formatter(FormatStrFormatter("%.4f"))
-            ax_bot.set_ylabel(r"$\Delta \ln[I(q)] / \sigma(q)$", fontsize=7)
-            ax_bot.tick_params(axis="both", which="major", labelsize=7)
+                ax_bot.plot(
+                    results_m1["x_fit"], results_m1["residuals"], "b-", linewidth=1
+                )
+                ax_bot.axhline(y=0, linestyle="--", color="red", linewidth=1)
+                ax_bot.set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
+                ax_bot.xaxis.set_major_formatter(FormatStrFormatter("%.4f"))
+                ax_bot.set_ylabel(r"$\Delta \ln[I(q)] / \sigma(q)$", fontsize=7)
+                ax_bot.tick_params(axis="both", which="major", labelsize=7)
 
             # Row 4 PDDF
 
