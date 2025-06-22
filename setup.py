@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="saxs_assistant",
-    version="0.1.1.dev23",
+    version="0.1.1.dev24",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this

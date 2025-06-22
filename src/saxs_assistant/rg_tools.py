@@ -337,6 +337,7 @@ def select_best_rg_method(
     nmax_auto=None,
     m1_nmin=None,
     m1_nmax=None,
+    method1_exists=None,
     sample_id="unknown",
 ):
     """
@@ -359,7 +360,7 @@ def select_best_rg_method(
         # This prevents loosing a good method 1 result when auto did bad as for example for a file had both give similar Rg
         # But auto had R2 ~ 0.3 but bc residuals were better it got chosen but then the file gets marked as unsolved
 
-        method1_exists = res_1 is not None and "residual_mean" in res_1
+        # method1_exists = res_1 is not None and "residual_mean" in res_1
 
         if method1_exists:
             auto_too_few_points = (nmax_auto - nmin_auto + 1) < 7

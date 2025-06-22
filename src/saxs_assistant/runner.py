@@ -481,6 +481,9 @@ def run_analysis(df_wrong, s0=0):
                 nmax_auto=df_wrong.loc[j, "AutoRg Rg idx max"],
                 m1_nmin=best_fit["nmin"],
                 m1_nmax=best_fit["nmax"],
+                method1_exists=not plot_data.get(sample_id, {}).get(
+                    "Method 1 Fail", False
+                ),
                 sample_id=sample_id,
             )
 
