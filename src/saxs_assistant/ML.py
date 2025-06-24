@@ -3,6 +3,25 @@ Including the clustering and the prediction of Dmax using a MLP regressor
 trained on SASBDB data
 """
 
+
+# ******************************************************************************
+# This file is part of SAXS Assistant.
+#
+#    All code from SAXS Assisstant can be used freely for non-commercial purposes.
+#    If you use this code in your work, please cite the following publications:
+# Add The GPA citation
+# Add Franke citation
+# Add Raw citation
+# SAXS Assistant citation
+#    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
+#
+#
+#    SAXS Assistant utilizes parts of the code from RAW
+#    SAXS Assistant is shared for helping the community with SAXS data analysis.
+#    but it is not a replacement for RAW, and does not include all the features of RAW.
+#    SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
+# ******************************************************************************************************
+
 import numpy as np
 import pandas as pd
 import logging

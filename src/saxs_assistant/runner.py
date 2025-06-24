@@ -5,6 +5,23 @@ Extracting various features and generating plots that are stored in a dictionary
 This module is designed to be run as a script, and it will process the SAXS data files specified in the input DataFrame.
 """
 
+# ******************************************************************************
+# This file is part of SAXS Assistant.
+#
+#    All code from SAXS Assisstant can be used freely for non-commercial purposes.
+#    If you use this code in your work, please cite the following publications:
+# Add The GPA citation
+# Add Franke citation
+# Add Raw citation
+# SAXS Assistant citation
+#    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
+#
+#
+#    SAXS Assistant utilizes parts of the code from RAW
+#    SAXS Assistant is shared for helping the community with SAXS data analysis.
+#    but it is not a replacement for RAW, and does not include all the features of RAW.
+#    SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
+# ******************************************************************************************************
 import numpy as np
 import pandas as pd
 import warnings
@@ -338,13 +355,6 @@ def run_analysis(df_wrong, s0=0):
             }
 
         except Exception as e:
-            #     logging.warning(f"AutoRg failed for {sample_id}: {e}")
-            #     skip_sample = True  # Flag to skip further analysis for this sample
-            # if skip_sample:
-            #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Auto Gunier"
-            #     plot_data.setdefault(sample_id, {})["Flagged"] = True
-            #     continue
-            # Dont need to bc method 1 could do fine this will just add -1
             pass
 
         # P(r)
@@ -443,23 +453,10 @@ def run_analysis(df_wrong, s0=0):
                 # logging.warning(f"Method 1 could not resolve Rg for {sample_id}")
                 plot_data.setdefault(sample_id, {})["Method 1 Fail"] = True
 
-                # skip_sample = True  # Flag to skip further analysis for this sample
-                # if skip_sample:
-                #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Method 1 Step 2"
-                #     plot_data.setdefault(sample_id, {})["Flagged"] = True
-
                 #     continue
         except Exception as e:
             # logging.warning(f"Rg Method 1 final selection failed for {sample_id}: {e}")
             plot_data.setdefault(sample_id, {})["Method 1 Fail"] = True
-
-            # skip_sample = True  # Flag to skip further analysis for this sample
-            # if skip_sample:
-            #     df_wrong.loc[df_wrong.index[j], "Fatal Error"] = (
-            #         "Method 1 Final Selection"
-            #     )
-            # plot_data.setdefault(sample_id, {})["Flagged"] = True #causin loss
-            # continue #causing loss
 
         # Here now making selection for Final Rg based on Mean residuals
         try:

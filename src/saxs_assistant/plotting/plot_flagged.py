@@ -6,6 +6,25 @@ from joblib import load
 from saxs_assistant.utils.helpers import clean_path
 
 
+# ******************************************************************************
+# This file is part of SAXS Assistant.
+#
+#    All code from SAXS Assisstant can be used freely for non-commercial purposes.
+#    If you use this code in your work, please cite the following publications:
+# Add The GPA citation
+# Add Franke citation
+# Add Raw citation
+# SAXS Assistant citation
+#    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
+#
+#
+#    SAXS Assistant utilizes parts of the code from RAW
+#    SAXS Assistant is shared for helping the community with SAXS data analysis.
+#    but it is not a replacement for RAW, and does not include all the features of RAW.
+#    SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
+# ******************************************************************************************************
+
+
 def plot_flagged(plot_data_path, output_folder=None, pdf_name="flagged_summary.pdf"):
     """
     Plots the flagged data files (those with 'Flagged' key).

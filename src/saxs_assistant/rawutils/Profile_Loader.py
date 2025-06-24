@@ -220,34 +220,6 @@ def loadFile(filename, raw_settings, no_processing=False, return_all_images=True
     return sasm, img
 
 
-# ----ALT from CHat Remove if dont end up using_________________________
-# def loadFile(filename, raw_settings, no_processing=False, return_all_images=True):
-#     ''' Loads a file and returns a SAS Measurement Object (SASM) and the full image if the
-#         selected file was an Image file
-#     '''
-#     try:
-#         file_type = checkFileType(filename)
-#     except IOError:
-#         raise
-#     except Exception as msg:
-#         print(str(msg))
-#         file_type = None
-
-#     if file_type not in ['hdf5', 'image']:  # We are not using images
-#         sasm = loadAsciiFile(filename, file_type)  # Ensure this function exists
-#         img = None
-#     else:
-#         sasm = None
-#         img = None
-
-#     if not isinstance(sasm, list) and (sasm is None or len(sasm.i) == 0):
-#         raise ValueError('No data could be retrieved from the file, unknown format.')
-
-#     return sasm, img
-
-# _________________________________________________
-
-
 def loadAsciiFile(filename, file_type):
     ascii_formats = {
         "rad": loadRadFile,

@@ -198,7 +198,7 @@ def get_all_pr_results(profile, q, I, err):
         except AttributeError:
             # logging.warning(
             #     f"P(r) AttributeError at nmin = {nmin} for {df_wrong['file name'][j]}"
-            # )  # Gotta fix this
+            # )
             pass
         except Exception as e:
             pass
@@ -218,7 +218,7 @@ def select_best_pr_fit(
     log_alpha_list,
     dmax_err_list,
     pr_qmin_list,
-    pr_qmax_list,  # ✅ NEW
+    pr_qmax_list,  #
     final_guinier_rg,
     final_guinier_i0,
     pr_list,
@@ -559,7 +559,7 @@ def read_bift_ift_file(file_path):
 def read_bift_metadata(file_path):
     """
     The bottom that has the parameters is in JSON style so this reads it. I dont extract the actual fully extrapolated bc not even used for plotting
-    plus tbh couldn't figure it out
+
 
     """
     with open(file_path, "r") as f:
