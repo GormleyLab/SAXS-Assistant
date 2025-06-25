@@ -45,6 +45,7 @@ from .rg_tools import (
     select_best_rg_method,
 )
 from .utils.helpers import reprocess_sasbdb_q_values
+import threading
 from .features import get_GPA, get_kratky
 from .ML import (
     predict_dmax_from_features_only,
@@ -53,7 +54,16 @@ from .ML import (
     load_model,
 )
 
+try:
+    from playsound import playsound
 
+    MUSIC_AVAILABLE = True
+except ImportError:
+    MUSIC_AVAILABLE = False
+
+import importlib.resources
+
+from .plotting import plot_solved_summary, plot_flagged
 from .PDDF_tools import (
     get_all_pr_results,
     unpack_pr_fits_dict,
@@ -554,7 +564,9 @@ def run_analysis(df_wrong, s0=0):
                         continue
 
         except Exception as e:
-            logging.warning(f"Final Rg selection failed for {sample_id}: {e}")
+            # logging.warning(f"Final Rg selection failed for {sample_id}: {e}")
+            logging.warning(f"Final Rg selection failed for {sample_id}")
+
             skip_sample = True  # Flag to skip further analysis for this sample
             if skip_sample:
                 df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Final Rg Selection"
@@ -669,9 +681,10 @@ def run_analysis(df_wrong, s0=0):
             }
 
         except Exception as e:
-            logging.warning(
-                f"Failed to extract and select final P(r) for {sample_id}: {e}"
-            )
+            # logging.warning(
+            #     f"Failed to extract and select final P(r) for {sample_id}: {e}"
+            # )
+            logging.warning(f"Failed to extract and select final P(r) for {sample_id}")
             skip_sample = True  # Flag to skip further analysis for this sample
             if skip_sample:
                 df_wrong.loc[df_wrong.index[j], "Fatal Error"] = "Final P(r) Selection"
@@ -816,6 +829,13 @@ def analyze_and_save(df_path, start_index=0, end_index=None, output_dir=None):
 
 def prepare_dataframe(dataframe_path=None, folder_path=None, angular_unit=None):
     """
+    For if user doesnt have  a dataframe that has the file names w the paths to each one they can do this but all files must be of the same angular units
+    if not then they have to either make their own or use this then go through the dataframe and correct for the angular units for any files that differ
+    angular unit should be specified as 1/A or 1/nm
+
+    If they use this the out put will be saved to the directory above the input folder that had the files for which the dataframe was generated.
+    with the name input_month_day_year.xlsx
+
     Prepares and saves a dataframe for SAXS analysis with required columns:
     - 'file name'
     - 'path'
@@ -896,3 +916,80 @@ def prepare_dataframe(dataframe_path=None, folder_path=None, angular_unit=None):
     print(f"Saved cleaned dataframe to: {save_path}")
 
     return df
+
+
+if MUSIC_AVAILABLE:
+
+    def play_playlist(stop_event, folder="saxs_assistant.music", playlist=None):
+        """
+
+        Plays a loop of MP3 files from the given package module (e.g., 'saxs_assistant.music')
+        until stop_event is set.
+        """
+        try:
+            # If no specific playlist provided, get all .mp3 files from package folder
+            if playlist is None:
+                # music_dir = importlib.resources.files("saxs_assistant.music")
+                music_dir = importlib.resources.files(folder)
+                playlist = [
+                    file for file in music_dir.iterdir() if file.name.endswith(".mp3")
+                ]
+                playlist.sort(key=lambda f: f.name)
+
+            # Loop through playlist until stop_event is set
+            while not stop_event.is_set():
+                for track_path in playlist:
+                    if stop_event.is_set():
+                        break
+                    playsound(str(track_path))
+                    time.sleep(0.5)
+
+        except Exception as e:
+            print(f"⚠️ Music playback error: {e}")
+
+
+def analyze_and_plot_all(
+    df_path, start_index=0, end_index=None, output_dir=None, music=False
+):
+    """
+    Runs SAXS analysis and automatically generates summary and flagged plots.
+
+    Parameters:
+    - df_path (str): Path to input Excel/CSV file.
+    - start_index (int): Optional index to start analysis from.
+    - end_index (int | None): Optional index to end analysis.
+    - output_dir (str | None): Where to save results. Defaults to "return" folder next to input file.
+    - music (bool | list | None): Set to True to play default music, or [True, "track_name"] to specify.
+    """
+    if music and MUSIC_AVAILABLE:
+        stop_music_event = threading.Event()
+        music_thread = threading.Thread(
+            target=play_playlist, args=(stop_music_event,), daemon=True
+        )
+        music_thread.start()
+
+    print(f" Analyzing: {df_path}")
+    plot_data, result_df = analyze_and_save(
+        df_path,
+        start_index=start_index,
+        end_index=end_index,
+        output_dir=output_dir,
+    )
+
+    # Determine output directory if not explicitly given
+
+    if output_dir is None:
+        output_dir = os.path.join(os.path.dirname(df_path), "return")
+
+    plot_data_path = os.path.join(output_dir, "plot_data.joblib")
+
+    print(f" Generating plots from: {plot_data_path}")
+    plot_solved_summary(plot_data_path)
+    plot_flagged(plot_data_path)
+    if music and MUSIC_AVAILABLE:
+        stop_music_event.set()
+
+    beep()
+    print(f"\n✅ Analysis complete! Results and plots saved to:\n{output_dir}")
+
+    return plot_data, result_df

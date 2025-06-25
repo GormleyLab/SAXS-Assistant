@@ -26,6 +26,20 @@ from IPython.display import Javascript, display
 import shutil
 import numpy as np
 
+import os
+import random
+import time
+import threading
+
+try:
+    from playsound import playsound
+
+    MUSIC_AVAILABLE = True
+except ImportError:
+    MUSIC_AVAILABLE = False
+
+import importlib.resources
+
 
 def SAXS_truncator(input_folder, output_folder, truncation_value=0.251):
     """
@@ -558,3 +572,35 @@ def clean_path(path_str, resolve_absolute=True):
         cleaned = os.path.abspath(cleaned)
 
     return cleaned
+
+
+# utils/helpers.py
+
+# if MUSIC_AVAILABLE:
+
+#     def play_playlist(stop_event, folder="saxs_assistant.music", playlist=None):
+#         """
+
+#         Plays a loop of MP3 files from the given package module (e.g., 'saxs_assistant.music')
+#         until stop_event is set.
+#         """
+#         try:
+#             # If no specific playlist provided, get all .mp3 files from package folder
+#             if playlist is None:
+#                 # music_dir = importlib.resources.files("saxs_assistant.music")
+#                 music_dir = importlib.resources.files(folder)
+#                 playlist = [
+#                     file for file in music_dir.iterdir() if file.name.endswith(".mp3")
+#                 ]
+#                 playlist.sort(key=lambda f: f.name)
+
+#             # Loop through playlist until stop_event is set
+#             while not stop_event.is_set():
+#                 for track_path in playlist:
+#                     if stop_event.is_set():
+#                         break
+#                     playsound(str(track_path))
+#                     time.sleep(0.5)
+
+#         except Exception as e:
+#             print(f"⚠️ Music playback error: {e}")

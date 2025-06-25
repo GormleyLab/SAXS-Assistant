@@ -4,7 +4,11 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 
-from saxs_assistant.runner import analyze_and_save, prepare_dataframe
+from saxs_assistant.runner import (
+    analyze_and_save,
+    prepare_dataframe,
+    analyze_and_plot_all,
+)
 
 from saxs_assistant.plotting import plot_solved_summary, plot_flagged
 from saxs_assistant.organizer import combine_sessions
@@ -78,9 +82,9 @@ def clean_path(path_str):
 #     r"C:\Users\Cesar\Box\Sync files\SAXS project\Manuscript\Test Data\local test\plot_data_100.joblib"
 # )
 # print(new)
-plot_flagged(
-    "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/final_results_Plots.joblib"
-)
+# plot_flagged(
+#     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/final_results_Plots.joblib"
+# )
 
 # plot_data = load(
 #     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/plot_data_100.joblib"
@@ -88,3 +92,10 @@ plot_flagged(
 # # Debugging aid
 # for sample_id, item in plot_data.items():
 #     print(f"{sample_id} keys: {item.keys()}")
+analyze_and_plot_all(
+    "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/input_df_Jun_20_25.xlsx",
+    music=True,
+)
+
+
+# pip install -e .[music]

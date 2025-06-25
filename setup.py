@@ -2,14 +2,14 @@ from setuptools import setup, find_packages
 
 setup(
     name="saxs_assistant",
-    version="0.1.1.dev24",
+    version="0.1.1.dev32",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     include_package_data=True,
-    package_data={"saxs_assistant": ["models/*.joblib"]},
+    package_data={"saxs_assistant": ["models/*.joblib", "music/*.mp3"]},
     install_requires=[
         "pandas==2.2.2",
         "joblib==1.5.1",
@@ -24,6 +24,7 @@ setup(
         "requests>=2.32,<3",
         "natsort",
     ],
+    extras_require={"music": ["playsound==1.2.2"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",  # Or your chosen license
