@@ -1,6 +1,7 @@
 import sys
 import os
 
+# If clone rep and want to run locally, use the command below to add the src folder to the path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "src")))
 
 
@@ -14,7 +15,6 @@ from saxs_assistant.plotting import plot_solved_summary, plot_flagged
 from saxs_assistant.organizer import combine_sessions
 from joblib import load
 
-print("ran")
 
 # prepare_dataframe(
 #     folder_path="C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/profiles",
@@ -34,31 +34,7 @@ print("ran")
 #     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test"
 # )
 
-# def clean_path(path_str, resolve_absolute=True):
-#     """
-#     Cleans up a path string, fixing Windows-style slashes and removing extra quotes.
 
-#     Args:
-#         path_str (str): The raw path string.
-#         resolve_absolute (bool): Whether to resolve to absolute path.
-
-#     Returns:
-#         str: Cleaned-up path.
-#     """
-#     if not isinstance(path_str, str):
-#         raise TypeError("Path must be a string.")
-
-#     # Strip quotes and whitespace
-#     path_str = path_str.strip().strip('"').strip("'")
-
-#     # Replace backslashes with forward slashes
-#     cleaned = path_str.replace("\\", "/")
-
-#     # Optionally resolve absolute path
-#     if resolve_absolute:
-#         cleaned = os.path.abspath(cleaned)
-
-#     return cleaned
 import os
 from pathlib import Path
 
@@ -78,10 +54,8 @@ def clean_path(path_str):
 # new = clean_path(
 #     r"C:\Users\Cesar\Box\Sync files\SAXS project\Manuscript\Test Data\local test\plot_data_100.joblib"
 # )
-# plot_flagged(
-#     r"C:\Users\Cesar\Box\Sync files\SAXS project\Manuscript\Test Data\local test\plot_data_100.joblib"
-# )
-# print(new)
+
+
 # plot_flagged(
 #     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/final_results_Plots.joblib"
 # )
@@ -90,8 +64,7 @@ def clean_path(path_str):
 #     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/plot_data_100.joblib"
 # )
 # # Debugging aid
-# for sample_id, item in plot_data.items():
-#     print(f"{sample_id} keys: {item.keys()}")
+
 analyze_and_plot_all(
     "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Data/local test/input_df_Jun_20_25.xlsx",
     music=True,

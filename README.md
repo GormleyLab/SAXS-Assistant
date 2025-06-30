@@ -27,7 +27,7 @@ pip install saxs-assistant[music]
 ### 1. Analyze Your Data
 
 ```python
-from saxs_assistant import analyze_and_plot_all
+from saxs_assistant.runner import analyze_and_plot_all
 
 plot_data, results = analyze_and_plot_all("path/to/input_file.xlsx")
 ```
@@ -59,7 +59,7 @@ analyze_and_plot_all(
 
 Use this if you don’t already have a dataframe:
 ```python
-from saxs_assistant import prepare_dataframe
+from saxs_assistant.runner import prepare_dataframe
 
 df = prepare_dataframe(folder_path="path/to/folder", angular_unit="1/A")
 ```
@@ -170,9 +170,10 @@ MIT License
 
 Developed for efficient SAXS exploration — may it help others find structure in the scatter.
 SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
-If you use SAXS Assistant Please Cite RAW and BIFT
+If you use SAXS Assistant Please Cite RAW and BIFT, and Franke et. al
 
 Hansen, S. Journal of Applied Crystallography (2000) 33, 1415-1421. DOI: 10.1107/S0021889800012930
 
 https://doi.org/10.1107/S1600576723011019
 https://doi.org/10.1107/S0021889809023863
+https://doi.org/10.1016/j.bpj.2018.04.018

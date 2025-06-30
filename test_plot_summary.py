@@ -1,7 +1,6 @@
 import os
 
 from plotting.plot_solved_summary import plot_solved_summary
-# from src.plotting import plot_solved_summary
 
 # Path to your joblib file with the dictionary
 plot_data_path = "C:/Users/Cesar/Box/Sync files/SAXS project/Manuscript/Test Outputs/plot_data.joblib"

@@ -17,6 +17,7 @@ from saxs_assistant.utils.helpers import clean_path
 # https://doi.org/10.1107/S0021889809023863
 # https://doi.org/10.1016/j.bpj.2018.04.018
 
+
 #    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
 #
 #

@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="saxs_assistant",
-    version="0.1.4",  # .dev42"
+    version="0.1.5",  # .dev42"
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -37,6 +37,6 @@ setup(
     ],
     python_requires=">=3.7",
     project_urls={
-        "Tutorial": "https://github.com/C3344/SAXS-Assistant/blob/main/Supplemental%20Data/Tutorial%20PDF.pdf",
+        "Tutorial": "https://pypi.org/project/saxs-assistant/",
     },
 )
