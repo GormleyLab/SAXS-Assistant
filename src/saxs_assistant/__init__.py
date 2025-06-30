@@ -1,1 +1,1 @@
-from .tutorial import show_tutorial
+from .tutorial import show_tutorial, show_supplemental

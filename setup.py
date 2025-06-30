@@ -1,8 +1,11 @@
 from setuptools import setup, find_packages
 
+with open("README.md", "r", encoding="utf-8") as fh:
+    long_description = fh.read()
+
 setup(
     name="saxs_assistant",
-    version="0.1.2",  # .dev42"
+    version="0.1.3",  # .dev42"
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this
@@ -31,4 +34,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
+    project_urls={
+        "Tutorial": "https://github.com/C3344/SAXS-Assistant/blob/main/Supplemental%20Data/Tutorial%20PDF.pdf",
+    },
 )
