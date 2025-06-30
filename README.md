@@ -38,6 +38,9 @@ This will:
 - Print status updates and return:
   - `plot_data`: dictionary for visualizations
   - `results`: pandas dataframe of SAXS outputs
+  - solved_only: pandas dataframe of SAXS outputs without any files that have "Fatal Flag" entry or missing Pr/Guinier Rg
+  -unsolved_only: Dataframe having only the files that werent solved
+  -plots folder: This has the raw graph data for the solved files will be saved in the same directory to where the PDF summary plots are solved
 
 #### Optional arguments
 ```python

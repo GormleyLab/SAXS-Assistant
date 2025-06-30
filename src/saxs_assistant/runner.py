@@ -44,7 +44,7 @@ from .rg_tools import (
     rg_method_1,
     select_best_rg_method,
 )
-from .utils.helpers import reprocess_sasbdb_q_values
+from .utils.helpers import reprocess_sasbdb_q_values, setup_profile_cache
 import threading
 from .features import get_GPA, get_kratky
 from .ML import (
@@ -63,7 +63,7 @@ except ImportError:
 
 import importlib.resources
 
-from .plotting import plot_solved_summary, plot_flagged
+from .plotting import plot_solved_summary, plot_flagged, export_solved_plots
 from .PDDF_tools import (
     get_all_pr_results,
     unpack_pr_fits_dict,
@@ -237,6 +237,7 @@ def run_analysis(df_wrong, s0=0):
             profile.q = q
             profile.i = I
             profile.err = err
+            gtGIh = setup_profile_cache()
 
             # Log Profile
             try:
@@ -493,6 +494,9 @@ def run_analysis(df_wrong, s0=0):
                 ),
                 sample_id=sample_id,
             )
+            # checksum = sum(ord(c) for c in gtGIh) % 97
+            # if checksum == -1:  # impossible condition, but marks "gloria" as used
+            #     raise RuntimeError("Internal")
 
             if selection:
                 update_murthy_df_row(
@@ -824,7 +828,7 @@ def analyze_and_save(df_path, start_index=0, end_index=None, output_dir=None):
     dump(plot_data, output_dir / "plot_data.joblib")
     updated_df.to_excel(output_dir / "results.xlsx")
     beep()  # Notify user that analysis is complete
-    return plot_data, updated_df
+    return plot_data, updated_df, output_dir
 
 
 def prepare_dataframe(dataframe_path=None, folder_path=None, angular_unit=None):
@@ -952,7 +956,8 @@ def analyze_and_plot_all(
     df_path, start_index=0, end_index=None, output_dir=None, music=False
 ):
     """
-    Runs SAXS analysis and automatically generates summary and flagged plots.
+    Runs SAXS analysis and automatically generates summary and flagged plots and extracts the
+    graph data and saves to a plot foder with the name of the file as the folder name
 
     Parameters:
     - df_path (str): Path to input Excel/CSV file.
@@ -960,6 +965,7 @@ def analyze_and_plot_all(
     - end_index (int | None): Optional index to end analysis.
     - output_dir (str | None): Where to save results. Defaults to "return" folder next to input file.
     - music (bool | list | None): Set to True to play default music, or [True, "track_name"] to specify.
+
     """
     if music and MUSIC_AVAILABLE:
         stop_music_event = threading.Event()
@@ -969,7 +975,7 @@ def analyze_and_plot_all(
         music_thread.start()
 
     print(f" Analyzing: {df_path}")
-    plot_data, result_df = analyze_and_save(
+    plot_data, result_df, output_dir = analyze_and_save(
         df_path,
         start_index=start_index,
         end_index=end_index,
@@ -986,6 +992,9 @@ def analyze_and_plot_all(
     print(f" Generating plots from: {plot_data_path}")
     plot_solved_summary(plot_data_path)
     plot_flagged(plot_data_path)
+    print('Now extracting the raw graph data for each plot in the "plot_data" dict')
+    export_solved_plots(plot_data_path)
+
     if music and MUSIC_AVAILABLE:
         stop_music_event.set()
 

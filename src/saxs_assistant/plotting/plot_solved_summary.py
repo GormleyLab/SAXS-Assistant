@@ -6,6 +6,7 @@ from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 from ..features import min_max_function
 from ..rg_tools import get_residuals_guinier_plot
+import pandas as pd
 
 # from .utils.helpers import clean_path
 from joblib import load
@@ -235,7 +236,7 @@ def plot_solved_summary(
             ax3.set_xlim(0, 1)
             ax3.set_yticks([])
             ax3.set_xticks([0, 0.5, 1.0])
-            ax3.set_title("Cluster\nProbs", fontsize=7.5)
+            ax3.set_title("Cluster\nProbabilities", fontsize=7.5)
             ax3.tick_params(axis="x", labelsize=7)
             for i, (label, prob) in enumerate(zip(labels, probs)):
                 fontweight = "bold" if i == assigned_cluster else "normal"
@@ -356,7 +357,8 @@ def plot_solved_summary(
                     warning_lines.append(r"$R^2$ < 0.73")
                 if (nmax - nmin) < 7:
                     # Special case: nmin=0 and nmax=6 → actually 7 points
-                    if not (nmin == 0 and (nmax - nmin) == 6):
+                    # if not (nmin == 0 and (nmax - nmin) == 6): #ccommented bc this wouldnt flag less than it, so gotta be stright up 6
+                    if not (nmin == 0 and nmax == 6):
                         warning_lines.append("Fewer than 7 points")
 
                 # If any warnings exist, plot the text
@@ -674,3 +676,288 @@ def get_dim_GPA2(I, q, rg, i0, nmin, nmax, plot=False):
         plt.show()
 
     return x_maxs, y_maxs, plot_params
+
+
+def export_solved_plots(joblib_path):
+    """
+    Extracts selected plot data from unflagged entries in plot_data and writes them to Excel.
+    A folder is created per sample inside a 'plots' directory next to the joblib file.
+    """
+
+    plot_data = load(joblib_path)
+    root_dir = os.path.dirname(joblib_path)
+    plots_dir = os.path.join(root_dir, "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+
+    selected_keys = [
+        "profile",
+        "GPA",
+        "kratky",
+        "pr_plot",
+        "pr_residuals",
+        "Dimless Kratky",
+    ]
+
+    for sample_id, plots in plot_data.items():
+        if "Flagged" in plots:
+            continue
+
+        sample_folder = os.path.join(plots_dir, sample_id)
+        os.makedirs(sample_folder, exist_ok=True)
+        plot_item = plot_data[
+            sample_id
+        ]  # redefined this bc just copied the guiner extraction from runner so easier fro me
+
+        for key in selected_keys:
+            if key not in plots:
+                continue
+
+            data = plots[key]
+
+            if key == "pr_residuals":
+                x_vals = data.get("residuals_x", [])
+                y_vals = data.get("residuals_y", [])
+                xlabel = "x"
+                ylabel = "y"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals})
+                filename = "pr_residuals.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+                x_vals = data.get("q_extrapolated", [])
+                y_vals = data.get("i_fit", [])
+                x_vals = x_vals[1:]
+
+                xlabel = "x"
+                ylabel = "y"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals})
+                filename = "Pr_fit_q_n_i.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+            if key == "pr_plot":
+                x_vals = data.get("pr_q_orig", [])
+                y_vals = data.get("pr_i_orig", [])
+
+                xlabel = "x"
+                ylabel = "y"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals})
+                filename = "Pr_fit_orig_q_n_i_.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+                x_vals = data.get("x", [])
+                y_vals = data.get("y", [])
+
+                xlabel = "x"
+                ylabel = "y"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals})
+                filename = "pr.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+            if key == "profile":
+                x_vals = data.get("x", [])
+                y_vals = data.get("y", [])
+                y_vals1 = data.get("yerr", [])  # error
+
+                xlabel = "x"
+                ylabel = "y"
+                ylabel1 = "yerr"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals, ylabel1: y_vals1})
+                filename = f"{key.replace(' ', '_')}.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+            if key in ["GPA", "kratky", "Dimless Kratky"]:
+                x_vals = data.get("x", [])
+                y_vals = data.get("y", [])
+
+                xlabel = "x"
+                ylabel = "y"
+
+                df = pd.DataFrame({xlabel: x_vals, ylabel: y_vals})
+                filename = f"{key.replace(' ', '_')}.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+            if "Auto Rg" in plot_item or plot_item["Auto Rg"].get("Rg", -1) > 0:
+                results_auto = get_residuals_guinier_plot(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["profile"]["yerr"],
+                    plot_item["Auto Rg"]["nmin"],
+                    plot_item["Auto Rg"]["nmax"],
+                )
+                x_all = results_auto["x_all"]
+                y_all = results_auto["y_all"]
+                x_fit = results_auto["x_fit"]
+                y_fit = results_auto["y_fit"]
+                y_model = results_auto["y_model"]
+                residual = results_auto["residuals"]
+
+                # lookup dictionaries
+                fit_dict = dict(zip(x_fit, y_fit))
+                model_dict = dict(zip(x_fit, y_model))
+                x_fit_dict = {x: x for x in x_fit}
+                residual_dict = dict(zip(x_fit, residual))
+
+                # aligned lists
+
+                aligned_y_fit = [fit_dict.get(x, np.nan) for x in x_all]
+                aligned_y_model = [model_dict.get(x, np.nan) for x in x_all]
+                aligned_x_fit = [x_fit_dict.get(x, np.nan) for x in x_all]
+                aligned_residuals = [residual_dict.get(x, np.nan) for x in x_all]
+
+                # Final DataFrame
+                df = pd.DataFrame(
+                    {
+                        "x_all": x_all,
+                        "y_all": y_all,
+                        "y_fitted_data": aligned_y_fit,
+                        "y_model": aligned_y_model,
+                        "residuals": aligned_residuals,
+                        "x_fit": aligned_x_fit,
+                    }
+                )
+
+                filename = "auto_guinier_.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+                x_maxs, y_maxs, plot_params = get_dim_GPA2(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["Auto Rg"]["Rg"],
+                    plot_item["Auto Rg"]["i0"],
+                    plot_item["Auto Rg"]["nmin"],
+                    plot_item["Auto Rg"]["nmax"],
+                )
+                gpa_ = plot_params["data"]
+
+                # Extract all aligned values
+                x_all = gpa_.get("x", [])
+                y_all = gpa_.get("y", [])
+                included_x = gpa_.get("included_x", [])
+                included_y = gpa_.get("included_y", [])
+                model_y = gpa_.get(
+                    "guinier_y",
+                    [],
+                )
+
+                # Build dictionaries to align fits to x_all
+                included_dict = dict(zip(included_x, included_y))
+                model_dict = dict(
+                    zip(x_all, model_y)
+                )  # Assumes model_y is aligned with x
+
+                # Align values
+                aligned_included_y = [included_dict.get(x, np.nan) for x in x_all]
+                aligned_model_y = [model_dict.get(x, np.nan) for x in x_all]
+                aligned_included_x = [x if x in included_x else np.nan for x in x_all]
+
+                df = pd.DataFrame(
+                    {
+                        "x_all": x_all,
+                        "y_all": y_all,
+                        "y_included": aligned_included_y,
+                        "y_model": aligned_model_y,
+                        "included_x": aligned_included_x,
+                        "guinier_x": gpa_.get("guinier_x", []),
+                        "guinier_y": gpa_.get("guinier_y", []),
+                    }
+                )
+
+                filename = "Dimless_GPA_fit_auto_guinier.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+            if "Rg Method 1 Final" in plot_item:
+                results_m1 = get_residuals_guinier_plot(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["profile"]["yerr"],
+                    plot_item["Rg Method 1 Final"]["nmin"][0],
+                    plot_item["Rg Method 1 Final"]["nmax"][0],
+                )
+                x_all = results_m1["x_all"]
+                y_all = results_m1["y_all"]
+                x_fit = results_m1["x_fit"]
+                y_fit = results_m1["y_fit"]
+                y_model = results_m1["y_model"]
+                residual = results_m1["residuals"]
+                # lookup dictionaries
+                fit_dict = dict(zip(x_fit, y_fit))
+                residual_dict = dict(zip(x_fit, residual))
+                model_dict = dict(zip(x_fit, y_model))
+                x_fit_dict = {x: x for x in x_fit}
+
+                # aligned lists
+                aligned_y_fit = [fit_dict.get(x, np.nan) for x in x_all]
+                aligned_y_model = [model_dict.get(x, np.nan) for x in x_all]
+                aligned_residuals = [residual_dict.get(x, np.nan) for x in x_all]
+                aligned_x_fit = [x_fit_dict.get(x, np.nan) for x in x_all]
+                # Final DataFrame
+                df = pd.DataFrame(
+                    {
+                        "x_all": x_all,
+                        "y_all": y_all,
+                        "y_fitted_data": aligned_y_fit,
+                        "y_model": aligned_y_model,
+                        "residuals": aligned_residuals,
+                        "x_fit": aligned_x_fit,
+                    }
+                )
+
+                filename = "Method1_Guinier_.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
+
+                x_maxs, y_maxs, plot_params = get_dim_GPA2(
+                    plot_item["profile"]["y"],
+                    plot_item["profile"]["x"],
+                    plot_item["Rg Method 1 Final"]["Rg"][0],
+                    plot_item["Rg Method 1 Final"]["i0"][0],
+                    plot_item["Rg Method 1 Final"]["nmin"][0],
+                    plot_item["Rg Method 1 Final"]["nmax"][0],
+                )
+                gpa_ = plot_params["data"]
+
+                # Extract all aligned values
+                x_all = gpa_.get("x", [])
+                y_all = gpa_.get("y", [])
+                included_x = gpa_.get("included_x", [])
+                included_y = gpa_.get("included_y", [])
+                model_y = gpa_.get("guinier_y", [])
+
+                # Build dictionaries to align fits to x_all
+                included_dict = dict(zip(included_x, included_y))
+                model_dict = dict(
+                    zip(x_all, model_y)
+                )  # Assumes model_y is aligned with x
+
+                # Align values
+                aligned_included_y = [included_dict.get(x, np.nan) for x in x_all]
+                aligned_included_x = [x if x in included_x else np.nan for x in x_all]
+                aligned_model_y = [model_dict.get(x, np.nan) for x in x_all]
+
+                df = pd.DataFrame(
+                    {
+                        "x_all": x_all,
+                        "y_all": y_all,
+                        "y_included": aligned_included_y,
+                        "y_model": aligned_model_y,
+                        "included_x": aligned_included_x,
+                        "guinier_x": gpa_.get("guinier_x", []),
+                        "guinier_y": gpa_.get("guinier_y", []),
+                    }
+                )
+
+                filename = "Dimless_GPA_fit_Method1.xlsx"
+                filepath = os.path.join(sample_folder, filename)
+                df.to_excel(filepath, index=False)
