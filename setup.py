@@ -5,8 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="saxs_assistant",
-    version="0.1.3",  # .dev42"
+    version="0.1.4",  # .dev42"
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Cesar Ramirez",
     author_email="cr828@scarletmai.rutgers.edu",  # Update this
     packages=find_packages(where="src"),
