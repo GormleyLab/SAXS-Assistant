@@ -170,3 +170,9 @@ MIT License
 
 Developed for efficient SAXS exploration — may it help others find structure in the scatter.
 SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
+If you use SAXS Assistant Please Cite RAW and BIFT
+
+Hansen, S. Journal of Applied Crystallography (2000) 33, 1415-1421. DOI: 10.1107/S0021889800012930
+
+https://doi.org/10.1107/S1600576723011019
+https://doi.org/10.1107/S0021889809023863

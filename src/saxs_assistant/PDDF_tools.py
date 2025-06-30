@@ -14,12 +14,14 @@ from .rawutils import rawapitry as raw
 # ******************************************************************************
 # This file is part of SAXS Assistant.
 #
-#    All code from SAXS Assisstant can be used freely for non-commercial purposes.
+#
 #    If you use this code in your work, please cite the following publications:
-# Add The GPA citation
-# Add Franke citation
-# Add Raw citation
-# SAXS Assistant citation
+# Hansen, S. Journal of Applied Crystallography (2000) 33, 1415-1421. DOI: 10.1107/S0021889800012930
+
+# https://doi.org/10.1107/S1600576723011019
+# https://doi.org/10.1107/S0021889809023863
+# https://doi.org/10.1016/j.bpj.2018.04.018
+
 #    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
 #
 #
@@ -27,22 +29,9 @@ from .rawutils import rawapitry as raw
 #    SAXS Assistant is shared for helping the community with SAXS data analysis.
 #    but it is not a replacement for RAW, and does not include all the features of RAW.
 #    SAXS Assisant does not offer warranty-- use at your own risk and evaluate the results carefully.
+# ******************************************************************************************************
 
 
-#    RAW is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation, either version 3 of the License, or
-#    (at your option) any later version.
-#
-#    RAW is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with RAW.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ******************************************************************************
 def get_ER(p, r):
     """
     Calculate the Elongation Ratio (ER) from a PDDF.

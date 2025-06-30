@@ -87,9 +87,4 @@ if __name__ == "__main__":
 # .\.venv\Scripts\activate   #thhen this , but will try to make a batch file to do this
 
 
-# python main.py --config config.json   #run this to test
-
-
-# Yank the files after when done
-
-# twine yank saxs_assistant1 -v 0.1.1.dev10
+# python main.py --config config.json   #run this to run this directly on your computer, can also close from github and install locally

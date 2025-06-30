@@ -5,12 +5,14 @@ This includes dimensionless GPA calculations, and other general tools."""
 # ******************************************************************************
 # This file is part of SAXS Assistant.
 #
-#    All code from SAXS Assisstant can be used freely for non-commercial purposes.
+#
 #    If you use this code in your work, please cite the following publications:
-# Add The GPA citation
-# Add Franke citation
-# Add Raw citation
-# SAXS Assistant citation
+# Hansen, S. Journal of Applied Crystallography (2000) 33, 1415-1421. DOI: 10.1107/S0021889800012930
+
+# https://doi.org/10.1107/S1600576723011019
+# https://doi.org/10.1107/S0021889809023863
+# https://doi.org/10.1016/j.bpj.2018.04.018
+
 #    SAXS Assistant is based on the code from RAW, which is a SAXS data analysis software.
 #
 #
