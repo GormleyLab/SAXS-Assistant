@@ -92,7 +92,7 @@ def plot_flagged(plot_data_path, output_folder=None, pdf_name="flagged_summary.p
                     plot_item["GPA"]["x"], plot_item["GPA"]["y"], "ob", markersize=2
                 )
                 ax.set_title("GPA", fontsize=7.5)
-                ax.set_xlabel(r"$q$ $(\mathrm{\AA}^{-2})$", fontsize=7)
+                ax.set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
                 ax.ticklabel_format(style="sci", axis="x", scilimits=(-2, 2))
                 ax.xaxis.get_offset_text().set_fontsize(6.5)
                 ax.set_ylabel(f"${plot_item['GPA']['ylabel']}$", fontsize=7)
@@ -109,6 +109,7 @@ def plot_flagged(plot_data_path, output_folder=None, pdf_name="flagged_summary.p
                 ax.set_title("Kratky", fontsize=7.5)
                 ax.set_xlabel(r"$q$ $(\mathrm{\AA}^{-1})$", fontsize=7)
                 ax.set_ylabel(r"$q^2I(q)$", fontsize=7)
+                ax.ticklabel_format(style="sci", axis="y", scilimits=(-2, 2))
                 ax.tick_params(axis="both", which="major", labelsize=7)
 
             # for j, (sample_id, plot_item) in enumerate(flagged_items[i : i + 4]):

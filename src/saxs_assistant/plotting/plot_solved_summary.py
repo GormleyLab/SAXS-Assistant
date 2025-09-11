@@ -94,9 +94,11 @@ def plot_solved_summary(
                 plot_item["GPA"]["x"], plot_item["GPA"]["y"], "ob", markersize=2
             )
             axs[1].set_title("GPA", fontsize=7.5)
-            axs[1].set_xlabel(r"$q$ $(\mathrm{\AA}^{-2})$", fontsize=7)
+            axs[1].set_xlabel(r"$q^2$ $(\mathrm{\AA}^{-2})$", fontsize=7)
             axs[1].xaxis.get_offset_text().set_fontsize(6.5)
             axs[1].set_ylabel(f"${plot_item['GPA']['ylabel']}$", fontsize=7)
+            axs[1].ticklabel_format(style="sci", axis="x", scilimits=(-2, 2))
+            axs[1].ticklabel_format(style="sci", axis="y", scilimits=(-2, 2))
             axs[1].tick_params(axis="both", which="major", labelsize=7)
 
             axs[2].plot(
