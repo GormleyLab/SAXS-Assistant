@@ -5,12 +5,12 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="saxs_assistant",
-    version="0.1.5",  # .dev42"
+    version="0.1.7",
     description="SAXS Assistant: Automated analysis of SAXS data including Guinier, PDDF, and ML-based Dmax prediction",
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Cesar Ramirez",
-    author_email="cr828@scarletmai.rutgers.edu",  # Update this
+    author_email="cr828@scarletmai.rutgers.edu",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     include_package_data=True,
@@ -32,7 +32,7 @@ setup(
     extras_require={"music": ["playsound==1.2.2"]},
     classifiers=[
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",  # Or your chosen license
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.7",
